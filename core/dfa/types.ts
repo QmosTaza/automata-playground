@@ -1,4 +1,3 @@
-
 export type StateId = string
 export type TransitionId = string
 
@@ -12,8 +11,8 @@ export type State = {
 export type Transition = {
     id: TransitionId
     symbol: string
-    from: State
-    to: State
+    from: StateId
+    to: StateId
 }
 
 export type DFA = {
@@ -21,5 +20,5 @@ export type DFA = {
     alphabet: string[]
     transitions: Transition[]
     startState: StateId
-    acceptStates: Set<StateId>
+    acceptStates: StateId[]
 }
