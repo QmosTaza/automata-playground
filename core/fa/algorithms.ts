@@ -1,36 +1,36 @@
-import { DFAEditor, State } from "../../types"
+import { FiniteAutomaton, State } from "../../types"
 import { createState, createTransition } from "./edit"
 
-export function makeDFAComplete(dfa: DFAEditor): DFAEditor {
+export function makeFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
     let sinkState: State | undefined
     const existing = new Set<string>()
-    let newTransitions = [...dfa.transitions]
-    for (const t of dfa.transitions) {
+    let newTransitions = [...fa.transitions]
+    for (const t of fa.transitions) {
         existing.add(`${t.from}|${t.symbol}`)
     }
-    for (const stateId in dfa.states) {
-        for (const symbol of dfa.alphabet) {
+    for (const stateId in fa.states) {
+        for (const symbol of fa.alphabet) {
             const key = `${stateId}|${symbol}`
             if (!existing.has(key)) {
                 if (!sinkState) {
-                    sinkState = createState(dfa)
+                    sinkState = createState(fa)
                 }
                 newTransitions.push(createTransition(stateId, sinkState.id, symbol))
             }
         }
     }
     if (!sinkState) {
-        return dfa
+        return fa
     } else {
-        for (const symbol of dfa.alphabet) {
+        for (const symbol of fa.alphabet) {
             newTransitions.push(createTransition(sinkState.id, sinkState.id, symbol))
         }
     }
 
     return {
-        ...dfa,
+        ...fa,
         states: {
-            ...dfa.states,
+            ...fa.states,
             [sinkState.id]: sinkState
         },
         transitions: newTransitions

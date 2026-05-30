@@ -1,6 +1,13 @@
 export type StateId = string
 export type TransitionId = string
 
+export type FiniteAutomaton = {
+    states: Record<StateId, State>
+    alphabet: string[]
+    transitions: Transition[]
+    startStates: StateId[]
+    acceptStates: StateId[]
+}
 
 export type State = {
     id: StateId
@@ -15,23 +22,21 @@ export type StateVisual = {
 
 export type Transition = {
     id: TransitionId
-    symbol: string
+    symbol: string | null
     from: StateId
     to: StateId
 }
 
-export type DFA = {
-    states: Record<StateId, State>
-    alphabet: string[]
-    transitions: Transition[]
-    startState: StateId
-    acceptStates: StateId[]
+export type DFA = FiniteAutomaton & {
+    kind: "dfa"
 }
 
-export type DFAEditor = {
-    states: Record<StateId, State>
-    transitions: Transition[]
-    startState?: StateId
-    acceptStates: StateId[]
-    alphabet: string[]
+export type NFA = FiniteAutomaton & {
+    kind: "nfa"
 }
+
+export type LambdaNFA = FiniteAutomaton & {
+    kind: "lambda-nfa"
+}
+
+export type Automaton = DFA | NFA | LambdaNFA

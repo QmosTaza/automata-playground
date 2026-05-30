@@ -1,4 +1,4 @@
-import { DFA, DFAEditor, StateId, TransitionId } from "./finite"
+import { DFA, NFA, LambdaNFA, StateId, TransitionId } from "./finite"
 
 export type AutomatonId = string
 
@@ -6,8 +6,8 @@ export type Project = {
     automata: Record<AutomatonId, Automaton>
 }
 
-export type Automaton = DFA
-export type AutomatonEditor = DFAEditor
+export type FiniteAutomaton = DFA | NFA | LambdaNFA
+export type Automaton = FiniteAutomaton
 
 export type ValidationResult = {
     valid: boolean
@@ -36,3 +36,19 @@ export type ValidationError =
         stateId: StateId,
         symbol: string
     }
+    | {
+        type: "ORPHAN_TRANSITION",
+        symbol: string
+    }
+
+export type SimulationStep = {
+    state: StateId
+    stepNumber: number
+    symbol: string
+}
+
+export type SimulationResult = {
+    accepted: boolean
+    steps: SimulationStep[]
+    error?: string
+}
