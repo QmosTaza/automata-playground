@@ -1,5 +1,4 @@
-import { accumulateRootVaryParam } from "next/dist/server/app-render/vary-params"
-import { DFA, StateId, State, Transition } from "./types"
+import { DFA, StateId, State, Transition } from "../../types"
 
 type SimulationStep = {
     state: StateId

@@ -1,5 +1,5 @@
-import { DFAEditor, StateId, State, TransitionId, Transition } from "./types"
-import { stateExists, validateTransition } from "./validate"
+import { DFAEditor, StateId, State, TransitionId, Transition } from "../../types"
+import { countMatchingTransitions, stateExists, validateTransitionStructure } from "./validate"
 import { generateId } from "../shared"
 
 //may replace an existing state too
@@ -50,7 +50,8 @@ export function selectRandomState(dfa: DFAEditor, rejectStates: StateId[]): Stat
 
 //checks that it follows DFA rules
 export function addTransition(dfa: DFAEditor, transition: Transition): DFAEditor {
-    if (!validateTransition(dfa, transition)) {
+    if (!validateTransitionStructure(dfa, transition) 
+        || countMatchingTransitions(dfa,transition.from, transition.symbol) > 0) {
         return dfa
     }
     return {
@@ -174,7 +175,8 @@ export function renameState( dfa: DFAEditor, stateId: StateId, newLabel: string)
 }
 
 export function updateTransition(dfa: DFAEditor, transition: Transition): DFAEditor {
-    if (!validateTransition(dfa, transition)) {
+    if (!validateTransitionStructure(dfa, transition) 
+        || countMatchingTransitions(dfa, transition.from, transition.symbol) > 0) {
         return dfa
     }
 
@@ -234,5 +236,3 @@ export function toggleSymbol(dfa: DFAEditor,symbol: string): DFAEditor {
         ? removeSymbolFromAlphabet(dfa, symbol)
         : addSymbolToAlphabet(dfa, symbol)
 }
-
-//missing renameState, addSymbolToAlphabet, remove, maybe updaters in general??, toggleAcceptState which could replade add and remove honestly

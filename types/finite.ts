@@ -1,15 +1,6 @@
-export type AutomatonId = string
 export type StateId = string
 export type TransitionId = string
 
-export type Project = {
-    automata: Record<AutomatonId, Automaton>
-}
-
-export type Automaton = {
-    id: AutomatonId
-    type: DFA | DFAEditor
-}
 
 export type State = {
     id: StateId

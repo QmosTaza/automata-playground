@@ -1,4 +1,4 @@
-import { DFAEditor, State } from "./types"
+import { DFAEditor, State } from "../../types"
 import { createState, createTransition } from "./edit"
 
 export function makeDFAComplete(dfa: DFAEditor): DFAEditor {
