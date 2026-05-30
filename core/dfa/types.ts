@@ -22,3 +22,11 @@ export type DFA = {
     startState: StateId
     acceptStates: StateId[]
 }
+
+export type DFAEditor = {
+  states: Record<StateId, State>
+  transitions: Transition[]
+  startState?: StateId
+  acceptStates: StateId[]
+  alphabet: string[]
+}

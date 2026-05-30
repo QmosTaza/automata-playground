@@ -1,43 +1,54 @@
-import { DFA, StateId, State, TransitionId, Transition } from "./types"
+import { DFAEditor, StateId, State, TransitionId, Transition } from "./types"
+import { validateTransition } from "./validate"
 
 //may replace an existing state too
-export function addState(dfa: DFA, state: State): DFA {
+export function addState(dfa: DFAEditor, state: State): DFAEditor {
     return {
         ...dfa,
         states: {
             ...dfa.states,
             [state.id]: state
-        }
+        },
     }
 }
 
-export function removeState(dfa: DFA, stateId: StateId): DFA {
+export function removeState(dfa: DFAEditor, stateId: StateId): DFAEditor {
     const { [stateId]: _, ...remainingStates } = dfa.states
     const remainingTransitions = dfa.transitions.filter(
         t => t.from !== stateId && t.to !== stateId
     )
+    const remainingAcceptedStates = dfa.acceptStates.filter(
+        s => s !== stateId
+    )
+    const newStartState = (dfa.startState === stateId) ? selectRandomState(dfa, [stateId]): dfa.startState
     return {
         ...dfa,
         transitions: remainingTransitions,
-        states: remainingStates
+        states: remainingStates,
+        acceptStates: remainingAcceptedStates,
+        startState: newStartState
     }
 }
 
-//checks that it follows AFD rules
-export function addTransition(dfa: DFA, transition: Transition): DFA {
-    //might wanna add this into validate.ts
-    const invalid = 
-        dfa.transitions.some(
-            t => t.from === transition.from && t.symbol === transition.symbol
-        ) 
-        || !(transition.from in dfa.states) 
-        || !(transition.to in dfa.states) 
-        || !dfa.alphabet.includes(transition.symbol)
+export function selectRandomState(dfa: DFAEditor, rejectStates: StateId[]): StateId | undefined {
+    const validStates = Object.keys(dfa.states).filter(
+        stateId => !rejectStates.includes(stateId)
+    )
 
-    if (invalid) {
-        return dfa
+    if (validStates.length === 0) {
+        return undefined
     }
 
+    const index = Math.floor(Math.random() * validStates.length)
+
+    return validStates[index]
+}
+
+//checks that it follows DFA rules
+export function addTransition(dfa: DFAEditor, transition: Transition): DFAEditor {
+    if (!validateTransition(dfa, transition)) {
+        return dfa
+    }
     return {
         ...dfa,
         transitions: [
@@ -47,7 +58,7 @@ export function addTransition(dfa: DFA, transition: Transition): DFA {
     }
 }
 
-export function removeTransition(dfa: DFA, transitionId: TransitionId): DFA {
+export function removeTransition(dfa: DFAEditor, transitionId: TransitionId): DFAEditor {
     const newTransitions = dfa.transitions.filter(
         t => t.id !== transitionId
     )
