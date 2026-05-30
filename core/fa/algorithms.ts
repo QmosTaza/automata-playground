@@ -13,7 +13,7 @@ export function makeFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
             const key = `${stateId}|${symbol}`
             if (!existing.has(key)) {
                 if (!sinkState) {
-                    sinkState = createState(fa)
+                    sinkState = createState(fa, 0, 0)
                 }
                 newTransitions.push(createTransition(stateId, sinkState.id, symbol))
             }

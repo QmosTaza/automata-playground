@@ -5,10 +5,13 @@ import { generateId } from "../shared"
 
 //STATE EDITING
 
-export function createState(fa: FiniteAutomaton): State {
+export function createState(fa: FiniteAutomaton, x:number, y:number): State {
     return {
         id: generateId(),
-        label: generateStateLabel(fa)
+        label: generateStateLabel(fa),
+        //TEMPORARILY
+        x: x,
+        y: y
     }
 }
 
@@ -98,7 +101,7 @@ function selectRandomState(fa: FiniteAutomaton, rejectStates: StateId[]): StateI
 }
 
 function generateStateLabel(fa: FiniteAutomaton): string {
-    let i = 0
+    let i: number = 0
     while (true) {
         const label = `q${i}`
         const exists = Object.values(fa.states).some(

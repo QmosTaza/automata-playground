@@ -1,6 +1,6 @@
 import { DFA, FiniteAutomaton, Automaton, Transition, StateId, ValidationResult, ValidationError } from "../../types"
 
-export function countMatchingTransitions(fa: FiniteAutomaton, stateId: StateId, symbol:string | null): number {
+export function countMatchingTransitions(fa: FiniteAutomaton, stateId: StateId, symbol: string | null): number {
     return fa.transitions.filter(
         t => t.from === stateId && t.symbol === symbol
     ).length
@@ -16,6 +16,11 @@ export function validateTransitionStructure(fa: FiniteAutomaton, transition: Tra
     if (transition.symbol === null) {
         return fa.kind === "lambda-nfa"
     }
+    if (fa.transitions.filter(
+        t => t.from === transition.from && t.symbol === transition.symbol && t.to === transition.to
+    ).length > 0) {
+        return false
+    }
     return fa.alphabet.includes(transition.symbol)
 }
 
@@ -24,14 +29,14 @@ export function stateExists(fa: FiniteAutomaton, stateId: StateId): boolean {
 }
 
 export function validateStartState(fa: FiniteAutomaton): boolean {
-    if (fa.startStates.length < 1){
-        return false
-    } 
-    if (fa.kind === "dfa" && fa.startStates.length > 1){
+    if (fa.startStates.length < 1) {
         return false
     }
-    for (const s of fa.startStates){
-        if (!stateExists(fa,s)) {return false}
+    if (fa.kind === "dfa" && fa.startStates.length > 1) {
+        return false
+    }
+    for (const s of fa.startStates) {
+        if (!stateExists(fa, s)) { return false }
     }
     return true
 }
