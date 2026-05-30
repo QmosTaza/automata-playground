@@ -8,7 +8,7 @@ import StateNode from "./StateNode";
 import TransitionEdge from "./TransitionEdge";
 import { faToNodes, faToEdges, EDGE_STYLE } from "@/visualizers";
 import { FiniteAutomaton } from "@/types";
-import { addState, createState, addTransition, createTransition } from "@/core/fa/edit";
+import { addState, createState, addTransition, createTransition, removeTransition, removeState, renameState, toggleAcceptState } from "@/core/fa/edit";
 
 const nodeTypes = {
     state: StateNode
@@ -38,91 +38,141 @@ const initialFA: FiniteAutomaton = {
 function AutomataCanvasContent() {
     const { screenToFlowPosition } = useReactFlow();
     const [fa, setFa] = useState(initialFA);
-    const [nodes, setNodes] = useState<Node[]>(faToNodes(initialFA));
-    const [edges, setEdges] = useState<Edge[]>(faToEdges(initialFA));
+
+    const onToggleAccept = useCallback((id: string) => {
+        setFa(prev => toggleAcceptState(prev, id));
+    }, []);
+
+    const onRename = useCallback((id: string, newLabel: string) => {
+        setFa(prev => renameState(prev, id, newLabel));
+    }, []);
+
+    const [nodes, setNodes] = useState<Node[]>([]);
+    const [edges, setEdges] = useState<Edge[]>([]);
+
+    const handleEditTransition = useCallback((edgeId: string) => {
+        const newSymbols = prompt("Introduce los nuevos símbolos separados por comas (vacío para λ):");
+        if (newSymbols === null) return;
+
+        setFa(prev => {
+            const baseTransition = prev.transitions.find(t => t.id === edgeId);
+            if (!baseTransition) return prev;
+
+            const filteredTransitions = prev.transitions.filter(
+                t => !(t.from === baseTransition.from && t.to === baseTransition.to)
+            );
+
+            const symbolsArray = newSymbols.split(",").map(s => s.trim());
+            const newTransitions = symbolsArray.map(sym => ({
+                id: sym === symbolsArray[0] ? edgeId : Math.random().toString(36).substring(7), // Mantenemos el ID base en el primero
+                from: baseTransition.from,
+                to: baseTransition.to,
+                symbol: sym === "" || sym === "λ" ? null : sym
+            }));
+
+            return {
+                ...prev,
+                transitions: [...filteredTransitions, ...newTransitions]
+            };
+        });
+    }, []);
+
+    useEffect(() => {
+        setNodes(faToNodes(fa, onToggleAccept, onRename));
+        setEdges(faToEdges(fa, handleEditTransition));
+    }, [fa, onToggleAccept, onRename, handleEditTransition]);
 
     const onNodesChange = useCallback((changes: any) => {
         setNodes((nds) => applyNodeChanges(changes, nds));
     }, []);
 
-    useEffect(() => {
-        setNodes(faToNodes(fa));
-        setEdges(faToEdges(fa));
-    }, [fa]);
-
-    const syncFA = useCallback(() => {
-        setFa((prev) => ({
-            ...prev,
-            states: Object.fromEntries(
-                nodes.map((n) => [
-                    n.id,
-                    {
-                        ...prev.states[n.id],
-                        x: n.position.x,
-                        y: n.position.y,
-                    },
-                ])
-            ),
-        }));
-    }, [nodes]);
+    const onNodeDragStop = useCallback((_: any, node: Node) => {
+        setFa(prev => {
+            const state = prev.states[node.id];
+            if (!state) return prev;
+            return {
+                ...prev,
+                states: {
+                    ...prev.states,
+                    [node.id]: { ...state, x: node.position.x, y: node.position.y }
+                }
+            };
+        });
+    }, []);
 
     const onPaneClick = useCallback((event: any) => {
-    const target = event.target;
-    const isHandle = target.closest?.('.react-flow__handle');
-    const isEdge = target.closest?.('.react-flow__edge');
-    
-    if (!isHandle && !isEdge) {
-        const position = screenToFlowPosition({
-            x: event.clientX,
-            y: event.clientY,
-        });
+        const target = event.target;
+        const isHandle = target.closest?.('.react-flow__handle');
+        const isEdge = target.closest?.('.react-flow__edge');
 
-        setFa(prev => {
-            const newState = createState(prev, position.x, position.y);
+        if (!isHandle && !isEdge) {
+            const position = screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+            });
 
-            setNodes(nds => [
-                ...nds,
-                {
-                    id: newState.id,
-                    type: "state",
-                    position,
-                    data: {
-                        label: newState.label,
-                        accepting: false
+            setFa(prev => {
+                const newState = createState(prev, position.x, position.y);
+
+                setNodes(nds => [
+                    ...nds,
+                    {
+                        id: newState.id,
+                        type: "state",
+                        position,
+                        data: {
+                            label: newState.label,
+                            accepting: false
+                        }
                     }
-                }
-            ]);
+                ]);
 
-            return addState(prev, newState);
-        });
-    }
-}, [screenToFlowPosition]);
+                return addState(prev, newState);
+            });
+        }
+    }, [screenToFlowPosition]);
 
     const onConnect = useCallback((connection: any) => {
-        const t = createTransition(connection.source, connection.target, fa.alphabet[0]);
-        const newEdge: Edge = {
-            id: t.id,
-            source: connection.source,
-            target: connection.target,
-            sourceHandle: connection.sourceHandle,
-            targetHandle: connection.targetHandle,
-            type: "transition",
-            label: t.symbol,
-        };
+        const symbol = prompt("Introduce el símbolo de la transición (deja vacío para λ):") ?? "";
+        const finalSymbol = symbol.trim() === "" ? null : symbol;
 
-        setEdges((eds) => addEdge(newEdge, eds));
-        setFa((prev) => addTransition(prev, t));
-    }, [fa.alphabet]);
+        setFa((prev) => {
+            const t = createTransition(connection.source, connection.target, finalSymbol);
+            return addTransition(prev, t);
+        });
+    }, []);
+
+    const onNodesDelete = useCallback((deletedNodes: Node[]) => {
+        setFa((prev) => {
+            let updatedFa = { ...prev };
+            deletedNodes.forEach(node => {
+                updatedFa = removeState(updatedFa, node.id);
+            });
+            return updatedFa;
+        });
+    }, []);
+
+    const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
+        setFa((prev) => {
+            let updatedFa = { ...prev };
+            deletedEdges.forEach(edge => {
+                updatedFa = removeTransition(updatedFa, edge.id);
+            });
+            return updatedFa;
+        });
+    }, []);
 
     return (
         <div className="w-full h-screen bg-stone-100">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
-                onNodesChange={onNodesChange}
-                onNodeDragStop={syncFA}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
+                onNodesChange={onNodesChange}
+                onNodeDragStop={onNodeDragStop}
+                onNodesDelete={onNodesDelete}
+                onEdgesDelete={onEdgesDelete}
                 defaultEdgeOptions={EDGE_STYLE}
                 onPaneClick={onPaneClick}
                 onConnect={onConnect}

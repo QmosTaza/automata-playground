@@ -6,7 +6,7 @@ export function countMatchingTransitions(fa: FiniteAutomaton, stateId: StateId, 
     ).length
 }
 
-export function validateTransitionStructure(fa: FiniteAutomaton, transition: Transition): boolean {
+export function validateTransition(fa: FiniteAutomaton, transition: Transition): boolean {
     const validStates =
         transition.from in fa.states &&
         transition.to in fa.states
@@ -22,6 +22,21 @@ export function validateTransitionStructure(fa: FiniteAutomaton, transition: Tra
         return false
     }
     return fa.alphabet.includes(transition.symbol)
+}
+
+export function validateTransitionStructure(fa: FiniteAutomaton, transition: Transition): boolean {
+    const validStates =
+        transition.from in fa.states &&
+        transition.to in fa.states
+    if (!validStates) {
+        return false
+    }
+    if (fa.transitions.filter(
+        t => t.from === transition.from && t.symbol === transition.symbol && t.to === transition.to
+    ).length > 0) {
+        return false
+    }
+    return true
 }
 
 export function stateExists(fa: FiniteAutomaton, stateId: StateId): boolean {

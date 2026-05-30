@@ -117,7 +117,7 @@ function generateStateLabel(fa: FiniteAutomaton): string {
 
 //TRANSITION EDITING
 
-export function createTransition(from: StateId, to: StateId, symbol: string): Transition {
+export function createTransition(from: StateId, to: StateId, symbol: string | null): Transition {
     return {
         id: generateId(),
         from,

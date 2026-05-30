@@ -1,11 +1,11 @@
 import { DFA, FiniteAutomaton, Automaton, Transition, StateId, ValidationResult, ValidationError } from "../../../types"
-import { validateTransitionStructure, countMatchingTransitions, validateStartState, stateExists } from "../validate"
+import { validateTransition, countMatchingTransitions, validateStartState, stateExists } from "../validate"
 
 export function validateDFA(fa: DFA): ValidationResult {
     const errors: ValidationError[] = []
 
     for (const t of fa.transitions) {
-        if ( !validateTransitionStructure(fa, t)) {
+        if ( !validateTransition(fa, t)) {
             errors.push({
                 type: "INVALID_TRANSITION",
                 transitionId: t.id
