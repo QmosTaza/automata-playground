@@ -2,7 +2,7 @@
 
 import { ReactFlow, Background, Controls, Node, Edge, applyNodeChanges, addEdge, ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 import StateNode from "./StateNode";
 import TransitionEdge from "./TransitionEdge";
@@ -39,6 +39,18 @@ function AutomataCanvasContent() {
     const { screenToFlowPosition } = useReactFlow();
     const [fa, setFa] = useState(initialFA);
 
+    const isConnectingRef = useRef(false);
+
+    const onConnectStart = useCallback(() => {
+        isConnectingRef.current = true;
+    }, []);
+
+    const onConnectEnd = useCallback(() => {
+        setTimeout(() => {
+            isConnectingRef.current = false;
+        }, 50);
+    }, []);
+
     const onToggleAccept = useCallback((id: string) => {
         setFa(prev => toggleAcceptState(prev, id));
     }, []);
@@ -64,7 +76,7 @@ function AutomataCanvasContent() {
 
             const symbolsArray = newSymbols.split(",").map(s => s.trim());
             const newTransitions = symbolsArray.map(sym => ({
-                id: sym === symbolsArray[0] ? edgeId : Math.random().toString(36).substring(7), // Mantenemos el ID base en el primero
+                id: sym === symbolsArray[0] ? edgeId : Math.random().toString(36).substring(7),
                 from: baseTransition.from,
                 to: baseTransition.to,
                 symbol: sym === "" || sym === "λ" ? null : sym
@@ -100,12 +112,24 @@ function AutomataCanvasContent() {
         });
     }, []);
 
-    const onPaneClick = useCallback((event: any) => {
-        const target = event.target;
-        const isHandle = target.closest?.('.react-flow__handle');
-        const isEdge = target.closest?.('.react-flow__edge');
+    const onPaneClick = useCallback((event: React.MouseEvent) => {
+        const target = event.target as HTMLElement;
 
-        if (!isHandle && !isEdge) {
+        if (isConnectingRef.current) return;
+
+        if (
+            target.closest('.react-flow__node') ||
+            target.closest('.react-flow__handle') ||
+            target.closest('.react-flow__edge')
+        ) {
+            return;
+        }
+
+        const isPane = target.classList.contains('react-flow__pane') || 
+            target.matches('.react-flow__renderer') ||
+            target.matches('svg.react-flow__background');
+
+        if (isPane) {
             const position = screenToFlowPosition({
                 x: event.clientX,
                 y: event.clientY,
@@ -113,20 +137,6 @@ function AutomataCanvasContent() {
 
             setFa(prev => {
                 const newState = createState(prev, position.x, position.y);
-
-                setNodes(nds => [
-                    ...nds,
-                    {
-                        id: newState.id,
-                        type: "state",
-                        position,
-                        data: {
-                            label: newState.label,
-                            accepting: false
-                        }
-                    }
-                ]);
-
                 return addState(prev, newState);
             });
         }
@@ -167,15 +177,17 @@ function AutomataCanvasContent() {
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
+                defaultEdgeOptions={EDGE_STYLE}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 onNodesChange={onNodesChange}
                 onNodeDragStop={onNodeDragStop}
                 onNodesDelete={onNodesDelete}
                 onEdgesDelete={onEdgesDelete}
-                defaultEdgeOptions={EDGE_STYLE}
                 onPaneClick={onPaneClick}
                 onConnect={onConnect}
+                onConnectStart={onConnectStart}
+                onConnectEnd={onConnectEnd}
                 fitView
                 nodesConnectable={true}
             >

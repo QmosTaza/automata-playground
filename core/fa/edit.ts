@@ -258,3 +258,10 @@ export function toggleSymbol(fa: FiniteAutomaton,symbol: string): FiniteAutomato
         ? removeSymbolFromAlphabet(fa, symbol)
         : addSymbolToAlphabet(fa, symbol)
 }
+
+
+// SYMBOL EDITING
+export function cleanSymbol (input: string) : string | null{
+    const trimmed = input.trim();
+    return trimmed === "" ? null : trimmed; // space = λ
+};
