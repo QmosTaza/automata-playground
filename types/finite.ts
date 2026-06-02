@@ -18,7 +18,7 @@ export type State = {
 
 export type Transition = {
     id: TransitionId
-    symbol: string | null
+    symbol: string | null | undefined
     from: StateId
     to: StateId
 }

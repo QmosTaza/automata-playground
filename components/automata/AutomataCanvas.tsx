@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactFlow, Background, Controls, Node, Edge, applyNodeChanges, addEdge, ReactFlowProvider, useReactFlow } from "@xyflow/react";
+import { ReactFlow, Background, Controls, Node, Edge, applyNodeChanges, applyEdgeChanges, ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useState, useCallback, useEffect, useRef } from "react";
 
@@ -62,6 +62,7 @@ function AutomataCanvasContent() {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
 
+    /*
     const handleEditTransition = useCallback((edgeId: string) => {
         const newSymbols = prompt("Introduce los nuevos símbolos separados por comas (vacío para λ):");
         if (newSymbols === null) return;
@@ -88,14 +89,54 @@ function AutomataCanvasContent() {
             };
         });
     }, []);
+    */
+
+    const handleUpdateSymbols = useCallback((edgeId: string, nextSymbols: (string | null)[]) => {
+        setFa(prev => {
+            const baseTransition = prev.transitions.find(t => t.id === edgeId);
+            if (!baseTransition) return prev;
+
+            const transitionsToRemove = prev.transitions.filter(
+                t => t.from === baseTransition.from && t.to === baseTransition.to
+            );
+            let updatedFa = prev;
+            transitionsToRemove.forEach(t => {
+                updatedFa = removeTransition(updatedFa, t.id);
+            });
+
+            if (nextSymbols.length === 0) {
+                const emptyT = createTransition(baseTransition.from, baseTransition.to, undefined);
+                emptyT.id = edgeId;
+                return addTransition(updatedFa, emptyT);
+            }
+
+            nextSymbols.forEach((sym, index) => {
+                const newT = createTransition(baseTransition.from, baseTransition.to, sym);
+                if (index === 0) {
+                    newT.id = edgeId;
+                }
+                updatedFa = addTransition(updatedFa, newT);
+            });
+
+            return updatedFa;
+        });
+    }, []);
+
+    const handleRemoveEdge = useCallback((edgeId: string) => {
+        setFa(prev => removeTransition(prev, edgeId));
+    }, []);
 
     useEffect(() => {
         setNodes(faToNodes(fa, onToggleAccept, onRename));
-        setEdges(faToEdges(fa, handleEditTransition));
-    }, [fa, onToggleAccept, onRename, handleEditTransition]);
+        setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
+    }, [fa, onToggleAccept, onRename, handleUpdateSymbols, handleRemoveEdge]);
 
     const onNodesChange = useCallback((changes: any) => {
         setNodes((nds) => applyNodeChanges(changes, nds));
+    }, []);
+
+    const onEdgesChange = useCallback((changes: any) => {
+        setEdges((eds) => applyEdgeChanges(changes, eds));
     }, []);
 
     const onNodeDragStop = useCallback((_: any, node: Node) => {
@@ -125,7 +166,7 @@ function AutomataCanvasContent() {
             return;
         }
 
-        const isPane = target.classList.contains('react-flow__pane') || 
+        const isPane = target.classList.contains('react-flow__pane') ||
             target.matches('.react-flow__renderer') ||
             target.matches('svg.react-flow__background');
 
@@ -143,11 +184,9 @@ function AutomataCanvasContent() {
     }, [screenToFlowPosition]);
 
     const onConnect = useCallback((connection: any) => {
-        const symbol = prompt("Introduce el símbolo de la transición (deja vacío para λ):") ?? "";
-        const finalSymbol = symbol.trim() === "" ? null : symbol;
-
         setFa((prev) => {
-            const t = createTransition(connection.source, connection.target, finalSymbol);
+            const defaultSymbol = prev.alphabet[0] ?? null;
+            const t = createTransition(connection.source, connection.target, defaultSymbol);
             return addTransition(prev, t);
         });
     }, []);
@@ -166,7 +205,12 @@ function AutomataCanvasContent() {
         setFa((prev) => {
             let updatedFa = { ...prev };
             deletedEdges.forEach(edge => {
-                updatedFa = removeTransition(updatedFa, edge.id);
+                const transitionsToRemove = prev.transitions.filter(
+                    t => t.from === edge.source && t.to === edge.target
+                );
+                transitionsToRemove.forEach(t => {
+                    updatedFa = removeTransition(updatedFa, t.id);
+                });
             });
             return updatedFa;
         });
@@ -181,6 +225,7 @@ function AutomataCanvasContent() {
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
                 onNodeDragStop={onNodeDragStop}
                 onNodesDelete={onNodesDelete}
                 onEdgesDelete={onEdgesDelete}
@@ -190,6 +235,10 @@ function AutomataCanvasContent() {
                 onConnectEnd={onConnectEnd}
                 fitView
                 nodesConnectable={true}
+                deleteKeyCode={['Backspace', 'Delete']}
+                selectionKeyCode={['Shift']}
+                edgesFocusable={true}
+            //connectionMode="loose"
             >
                 <Background />
                 <Controls />
@@ -198,7 +247,6 @@ function AutomataCanvasContent() {
     );
 }
 
-// Wrapper component with provider
 export default function AutomataCanvas() {
     return (
         <ReactFlowProvider>

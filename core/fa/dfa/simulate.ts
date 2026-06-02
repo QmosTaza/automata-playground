@@ -2,7 +2,6 @@ import { DFA, StateId, State, Transition, SimulationResult, SimulationStep } fro
 
 
 export function runDFA(fa: DFA, input: string): SimulationResult {
-    //WIP
     let currentState = fa.startStates[0]
     const steps: SimulationStep[] = []
 

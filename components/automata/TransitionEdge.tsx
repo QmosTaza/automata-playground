@@ -1,12 +1,67 @@
 "use client"
 
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, EdgeProps, Position } from "@xyflow/react"
+import { useState, useRef, useEffect } from "react";
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, EdgeProps, MarkerType } from "@xyflow/react"
 
 export default function TransitionEdge({ id, sourceX, sourceY,
-    targetX, targetY, sourcePosition, targetPosition, label, markerEnd, data
+    targetX, targetY, sourcePosition, targetPosition, label, markerEnd, data, selected
 }: EdgeProps) {
 
-    const isSelfLoop = data?.isLoop || (sourceX === targetX && sourceY === targetY)
+    //SYMBOL EDITING
+    const [isEditing, setIsEditing] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const customData = data as any;
+    const symbols: (string | null)[] = customData?.symbols ?? [];
+
+    useEffect(() => {
+        if (isEditing && containerRef.current) {
+            containerRef.current.focus();
+        }
+    }, [isEditing]);
+
+    useEffect(() => {
+        if (!isEditing) return;
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsEditing(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isEditing]);
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (!isEditing || !data) return;
+
+        e.preventDefault();
+
+        if (e.key === "Backspace" || e.key === "Delete") {
+            if (symbols.length === 0) {
+                setIsEditing(false);
+                customData.onRemoveEdge?.(id);
+            } else {
+                const nextSymbols = symbols.slice(0, -1);
+                customData.onUpdateSymbols?.(id, nextSymbols);
+            }
+        } else if (e.key === " ") {
+            customData.onUpdateSymbols?.(id, [...symbols, null]);
+        } else if (e.key === "Enter" || e.key === "Escape") {
+            setIsEditing(false);
+        } else if (e.key.length === 1) {
+            customData.onUpdateSymbols?.(id, [...symbols, e.key]);
+        }
+    };
+
+    //EDGE EDITION
+    const edgeColor = selected ? "#3b82f6" : "#92400e";
+
+    const localMarkerId = `marker-${id}`;
+
+    //PATH CALCULATION
+    const isSelfLoop = customData?.isLoop || (sourceX === targetX && sourceY === targetY)
     let path: string
     let labelX = (sourceX + targetX) / 2
     let labelY = (sourceY + targetY) / 2
@@ -47,33 +102,81 @@ export default function TransitionEdge({ id, sourceX, sourceY,
 
     return (
         <>
+            <defs>
+                <marker
+                    id={localMarkerId}
+                    viewBox="0 0 10 10"
+                    refX="8"
+                    refY="4.9"
+                    markerWidth="8"
+                    markerHeight="8"
+                    orient="auto-start-reverse"
+                >
+                    <path
+                        d="M 2 2 Q 3 5 2 7.5 L 8 5 Z"
+                        fill={edgeColor}
+                        stroke={edgeColor}
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"         
+                        strokeLinecap="round"   
+                        style={{ transition: "fill 0.15s, stroke 0.15s" }}
+                    />
+                </marker>
+            </defs>
+            <path
+                d={path}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={20}
+                className="react-flow__edge-interaction cursor-pointer"
+            />
             <BaseEdge
                 id={id}
                 path={path}
-                markerEnd={markerEnd}
+                markerEnd={`url(#${localMarkerId})`}
                 style={{
-                    stroke: "#92400e",
-                    strokeWidth: 2
+                    stroke: edgeColor,
+                    strokeWidth: selected ? 3 : 2,
+                    transition: "stroke 0.15s, stroke-width 0.15s"
                 }}
             />
-
             <EdgeLabelRenderer>
                 <div
+                    ref={containerRef}
+                    tabIndex={0}
+                    onKeyDown={handleKeyDown}
+                    onClick={(e) => {
+                        //if (e.shiftKey) return;
+                        if (!selected) return;
+                        e.stopPropagation();
+                        setIsEditing(true);
+                    }}
                     style={{
                         position: "absolute",
                         transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
                         pointerEvents: "all",
                         zIndex: 10
                     }}
-                    onDoubleClick={(e) => {
-                        e.stopPropagation();
-                        (data as any)?.onEdit?.(id);
-                    }}
-                    className="px-1 py-0.5 rounded-full bg-amber-100 cursor-pointer select-none
-                        border-2 border-amber-300 text-stone-800 text-sm font-semibold
-                    "
+                    className={`px-2 py-0.5 rounded-full select-none border-2 transition-all outline-none
+                        ${isEditing
+                            ? "bg-amber-50 border-amber-500 ring-2 ring-amber-300 scale-105 cursor-text"
+                            : selected
+                                ? "bg-blue-50 border-blue-500 text-blue-900 font-bold ring-2 ring-blue-300 scale-105 cursor-pointer"
+                                : "bg-amber-100 border-amber-300 text-stone-800 font-semibold hover:bg-amber-200 cursor-pointer"
+                        }
+                        ${symbols.length === 0 && !isEditing ? "border-dashed border-red-400 bg-red-50 text-red-700" : ""}
+                    `}
                 >
-                    {label}
+                    {symbols.length === 0 ? (
+                        <span className="text-red-600 text-xs font-bold">Ø</span>
+                    ) : (
+                        symbols.map((sym, index) => (
+                            <span key={index}>
+                                {sym === null ? "λ" : sym}
+                                {index < symbols.length - 1 && <span className="text-amber-600 font-normal">, </span>}
+                            </span>
+                        ))
+                    )}
                 </div>
             </EdgeLabelRenderer>
         </>

@@ -11,7 +11,8 @@ export function validateDFA(fa: DFA): ValidationResult {
                 transitionId: t.id
             })
         }
-        if (t.symbol !== null && countMatchingTransitions(fa, t.from, t.symbol) !== 1) {
+        if (t.symbol !== null && t.symbol !== undefined && 
+            countMatchingTransitions(fa, t.from, t.symbol) !== 1) {
             errors.push({
                 type: "NON_DETERMINISTIC_TRANSITION",
                 stateId: t.from,

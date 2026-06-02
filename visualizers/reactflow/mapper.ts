@@ -16,7 +16,9 @@ export function faToNodes(fa: FiniteAutomaton, onToggleAccept: (id: string) => v
     }));
 }
 
-export function faToEdges(fa: FiniteAutomaton, onEditTransition: (edgeId:string) => void): Edge[] {
+export function faToEdges(fa: FiniteAutomaton,
+    onUpdateSymbols: (edgeId: string, nextSymbols: (string | null)[]) => void,
+    onRemoveEdge: (edgeId: string) => void): Edge[] {
     const groups = new Map<string, Transition[]>();
 
     for (const t of fa.transitions) {
@@ -29,17 +31,22 @@ export function faToEdges(fa: FiniteAutomaton, onEditTransition: (edgeId:string)
     return Array.from(groups.entries()).map(([key, transitions]) => {
         const first = transitions[0];
         const hasReturn = groups.has(`${first.to}|${first.from}`) && first.from !== first.to;
+        const finalSymbols = transitions.length === 1 && first.symbol === undefined
+            ? []
+            : transitions.map(t => t.symbol as string | null);
 
         return {
             id: first.id,
             source: first.from,
             target: first.to,
             type: "transition",
-            label: transitions.map(t => t.symbol ?? "λ").join(", "),
-            data: { 
+            label: "",
+            data: {
                 isLoop: first.from === first.to,
                 isBiDirectional: hasReturn,
-                onEdit: onEditTransition
+                symbols: finalSymbols,
+                onUpdateSymbols: onUpdateSymbols,
+                onRemoveEdge: onRemoveEdge
             }
         };
     });
