@@ -1,5 +1,6 @@
 import { DFA, FiniteAutomaton, Automaton, Transition, StateId, ValidationResult, ValidationError } from "../../../types"
 import { validateTransition, countMatchingTransitions, validateStartState, stateExists } from "../validate"
+import { getStateFromId } from "../edit"
 
 export function validateDFA(fa: DFA): ValidationResult {
     const errors: ValidationError[] = []

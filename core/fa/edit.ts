@@ -265,3 +265,15 @@ export function cleanSymbol (input: string) : string | null{
     const trimmed = input.trim();
     return trimmed === "" ? null : trimmed; // space = λ
 };
+
+//OTHERS
+export function getStateFromId (fa: FiniteAutomaton, id: StateId | undefined) : State | undefined{
+    if (!id) return undefined
+    return fa.states[id]
+}
+
+export function getTransitionFromId (fa: FiniteAutomaton, id: TransitionId | undefined) : Transition | undefined{
+    return fa.transitions.find(
+        transition => transition.id === id
+    )
+}

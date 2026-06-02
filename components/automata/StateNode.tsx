@@ -51,12 +51,33 @@ export default function StateNode({ id, data, selected }: any) {
         data.onToggleAccept(id);
     };
 
+    const handleToggleStart = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isEditing) return;
+        data.onToggleStart?.(id);
+    };
+
     return (
         <div
             onDoubleClick={handleDoubleClick}
-            onContextMenu={handleContextMenu}
+            onContextMenu={(e) => {
+                e.preventDefault();
+                if (e.altKey || e.shiftKey) {
+                    handleToggleStart(e);
+                } else {
+                    data.onToggleAccept(id);
+                }
+            }}
             className="relative"
         >
+            {data.isStart && (
+                <div className="absolute -left-8 top-1/2 -translate-y-1/2 pointer-events-none text-stone-800 animate-fade-in">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path d="M2 12h16M12 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                </div>
+            )}
             <Handle type="target" position={Position.Left} id="left-target"
                 className={handleClassName} />
 

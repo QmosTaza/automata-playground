@@ -1,7 +1,7 @@
 import { Node, Edge } from "@xyflow/react"
 import { FiniteAutomaton, Transition } from "@/types"
 
-export function faToNodes(fa: FiniteAutomaton, onToggleAccept: (id: string) => void, onRename: (id: string, name: string) => void): Node[] {
+export function faToNodes(fa: FiniteAutomaton, onToggleAccept: (id: string) => void, onRename: (id: string, name: string) => void, onToggleStart: (id: string) => void): Node[] {
     return Object.values(fa.states).map(state => ({
         id: state.id,
         type: "state",
@@ -10,7 +10,8 @@ export function faToNodes(fa: FiniteAutomaton, onToggleAccept: (id: string) => v
             label: state.label,
             accepting: fa.acceptStates.includes(state.id),
             onToggleAccept,
-            onRename
+            onRename,
+            onToggleStart
         },
         draggable: true
     }));

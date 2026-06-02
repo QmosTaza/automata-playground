@@ -8,7 +8,7 @@ import StateNode from "./StateNode";
 import TransitionEdge from "./TransitionEdge";
 import { faToNodes, faToEdges, EDGE_STYLE } from "@/visualizers";
 import { FiniteAutomaton } from "@/types";
-import { addState, createState, addTransition, createTransition, removeTransition, removeState, renameState, toggleAcceptState } from "@/core/fa/edit";
+import { addState, createState, addTransition, createTransition, removeTransition, removeState, renameState, toggleAcceptState, toggleStartState } from "@/core/fa/edit";
 
 const nodeTypes = {
     state: StateNode
@@ -57,6 +57,10 @@ function AutomataCanvasContent() {
 
     const onRename = useCallback((id: string, newLabel: string) => {
         setFa(prev => renameState(prev, id, newLabel));
+    }, []);
+
+    const onToggleStart = useCallback((id: string) => {
+        setFa(prev => toggleStartState(prev, id));
     }, []);
 
     const [nodes, setNodes] = useState<Node[]>([]);
@@ -127,7 +131,7 @@ function AutomataCanvasContent() {
     }, []);
 
     useEffect(() => {
-        setNodes(faToNodes(fa, onToggleAccept, onRename));
+        setNodes(faToNodes(fa, onToggleAccept, onRename, onToggleStart));
         setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
     }, [fa, onToggleAccept, onRename, handleUpdateSymbols, handleRemoveEdge]);
 
