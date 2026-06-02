@@ -17,7 +17,7 @@ export function validateTransition(fa: FiniteAutomaton, transition: Transition):
         return fa.kind === "lambda-nfa"
     }
     if (fa.transitions.filter(
-        t => t.from === transition.from && t.symbol === transition.symbol && t.to === transition.to
+        t => t.id !== transition.id && t.from === transition.from && t.symbol === transition.symbol && t.to === transition.to
     ).length > 0) {
         return false
     }
@@ -32,7 +32,7 @@ export function validateTransitionStructure(fa: FiniteAutomaton, transition: Tra
         return false
     }
     if (fa.transitions.filter(
-        t => t.from === transition.from && t.symbol === transition.symbol && t.to === transition.to
+        t => t.id !== transition.id && t.from === transition.from && t.symbol === transition.symbol && t.to === transition.to
     ).length > 0) {
         return false
     }

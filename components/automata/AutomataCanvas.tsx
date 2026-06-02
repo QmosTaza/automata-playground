@@ -1,24 +1,24 @@
 "use client";
 
-import { ReactFlow, Background, Controls, Node, Edge, applyNodeChanges, applyEdgeChanges, ReactFlowProvider, useReactFlow } from "@xyflow/react";
+import { ReactFlow, Background, Controls, ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useRef, useCallback } from "react";
 
 import StateNode from "./StateNode";
 import TransitionEdge from "./TransitionEdge";
-import { faToNodes, faToEdges, EDGE_STYLE } from "@/visualizers";
-import { FiniteAutomaton } from "@/types";
-import { addState, createState, addTransition, createTransition, removeTransition, removeState, renameState, toggleAcceptState, toggleStartState } from "@/core/fa/edit";
+import SimulationControls from "./SimulationControls";
+import ValidationErrorPanel from "./ValidationErrorPanel";
 
-const nodeTypes = {
-    state: StateNode
-};
+import { EDGE_STYLE } from "@/visualizers";
+import { useAutomata } from "@/hooks/useAutomata";
+import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa/edit";
+import { runDFA } from "@/core/fa/dfa/simulate";
+import { DFA } from "@/types";
 
-const edgeTypes = {
-    transition: TransitionEdge
-};
+const nodeTypes = { state: StateNode };
+const edgeTypes = { transition: TransitionEdge };
 
-const initialFA: FiniteAutomaton = {
+const initialFA = {
     states: {
         q0: { id: "q0", label: "q0", x: 100, y: 100 },
         q1: { id: "q1", label: "q1", x: 300, y: 100 }
@@ -31,13 +31,17 @@ const initialFA: FiniteAutomaton = {
     ],
     startStates: ["q0"],
     acceptStates: ["q1"],
-    kind: "dfa"
+    kind: "dfa" as const
 };
 
-
 function AutomataCanvasContent() {
-    const { screenToFlowPosition } = useReactFlow();
-    const [fa, setFa] = useState(initialFA);
+    const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
+    
+    const {
+        fa, setFa, nodes, edges,
+        onNodesChange, onEdgesChange, onNodeDragStop,
+        validationErrors, canRunSimulation
+    } = useAutomata(initialFA);
 
     const isConnectingRef = useRef(false);
 
@@ -46,182 +50,76 @@ function AutomataCanvasContent() {
     }, []);
 
     const onConnectEnd = useCallback(() => {
-        setTimeout(() => {
-            isConnectingRef.current = false;
-        }, 50);
-    }, []);
-
-    const onToggleAccept = useCallback((id: string) => {
-        setFa(prev => toggleAcceptState(prev, id));
-    }, []);
-
-    const onRename = useCallback((id: string, newLabel: string) => {
-        setFa(prev => renameState(prev, id, newLabel));
-    }, []);
-
-    const onToggleStart = useCallback((id: string) => {
-        setFa(prev => toggleStartState(prev, id));
-    }, []);
-
-    const [nodes, setNodes] = useState<Node[]>([]);
-    const [edges, setEdges] = useState<Edge[]>([]);
-
-    /*
-    const handleEditTransition = useCallback((edgeId: string) => {
-        const newSymbols = prompt("Introduce los nuevos símbolos separados por comas (vacío para λ):");
-        if (newSymbols === null) return;
-
-        setFa(prev => {
-            const baseTransition = prev.transitions.find(t => t.id === edgeId);
-            if (!baseTransition) return prev;
-
-            const filteredTransitions = prev.transitions.filter(
-                t => !(t.from === baseTransition.from && t.to === baseTransition.to)
-            );
-
-            const symbolsArray = newSymbols.split(",").map(s => s.trim());
-            const newTransitions = symbolsArray.map(sym => ({
-                id: sym === symbolsArray[0] ? edgeId : Math.random().toString(36).substring(7),
-                from: baseTransition.from,
-                to: baseTransition.to,
-                symbol: sym === "" || sym === "λ" ? null : sym
-            }));
-
-            return {
-                ...prev,
-                transitions: [...filteredTransitions, ...newTransitions]
-            };
-        });
-    }, []);
-    */
-
-    const handleUpdateSymbols = useCallback((edgeId: string, nextSymbols: (string | null)[]) => {
-        setFa(prev => {
-            const baseTransition = prev.transitions.find(t => t.id === edgeId);
-            if (!baseTransition) return prev;
-
-            const transitionsToRemove = prev.transitions.filter(
-                t => t.from === baseTransition.from && t.to === baseTransition.to
-            );
-            let updatedFa = prev;
-            transitionsToRemove.forEach(t => {
-                updatedFa = removeTransition(updatedFa, t.id);
-            });
-
-            if (nextSymbols.length === 0) {
-                const emptyT = createTransition(baseTransition.from, baseTransition.to, undefined);
-                emptyT.id = edgeId;
-                return addTransition(updatedFa, emptyT);
-            }
-
-            nextSymbols.forEach((sym, index) => {
-                const newT = createTransition(baseTransition.from, baseTransition.to, sym);
-                if (index === 0) {
-                    newT.id = edgeId;
-                }
-                updatedFa = addTransition(updatedFa, newT);
-            });
-
-            return updatedFa;
-        });
-    }, []);
-
-    const handleRemoveEdge = useCallback((edgeId: string) => {
-        setFa(prev => removeTransition(prev, edgeId));
-    }, []);
-
-    useEffect(() => {
-        setNodes(faToNodes(fa, onToggleAccept, onRename, onToggleStart));
-        setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
-    }, [fa, onToggleAccept, onRename, handleUpdateSymbols, handleRemoveEdge]);
-
-    const onNodesChange = useCallback((changes: any) => {
-        setNodes((nds) => applyNodeChanges(changes, nds));
-    }, []);
-
-    const onEdgesChange = useCallback((changes: any) => {
-        setEdges((eds) => applyEdgeChanges(changes, eds));
-    }, []);
-
-    const onNodeDragStop = useCallback((_: any, node: Node) => {
-        setFa(prev => {
-            const state = prev.states[node.id];
-            if (!state) return prev;
-            return {
-                ...prev,
-                states: {
-                    ...prev.states,
-                    [node.id]: { ...state, x: node.position.x, y: node.position.y }
-                }
-            };
-        });
+        setTimeout(() => { isConnectingRef.current = false; }, 50);
     }, []);
 
     const onPaneClick = useCallback((event: React.MouseEvent) => {
         const target = event.target as HTMLElement;
-
         if (isConnectingRef.current) return;
+        if (target.closest('.react-flow__node') || target.closest('.react-flow__handle') || target.closest('.react-flow__edge')) return;
 
-        if (
-            target.closest('.react-flow__node') ||
-            target.closest('.react-flow__handle') ||
-            target.closest('.react-flow__edge')
-        ) {
-            return;
-        }
+        const hasSelectedNodes = getNodes().some(node => node.selected);
+        const hasSelectedEdges = getEdges().some(edge => edge.selected);
+        
+        if (hasSelectedNodes || hasSelectedEdges) {return;}
 
-        const isPane = target.classList.contains('react-flow__pane') ||
-            target.matches('.react-flow__renderer') ||
-            target.matches('svg.react-flow__background');
+        const isPane = target.classList.contains('react-flow__pane') || target.matches('.react-flow__renderer') || target.matches('svg.react-flow__background');
 
         if (isPane) {
-            const position = screenToFlowPosition({
-                x: event.clientX,
-                y: event.clientY,
-            });
-
-            setFa(prev => {
-                const newState = createState(prev, position.x, position.y);
-                return addState(prev, newState);
-            });
+            const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+            setFa(prev => addState(prev, createState(prev, position.x, position.y)));
         }
-    }, [screenToFlowPosition]);
+    }, [screenToFlowPosition, setFa]);
 
     const onConnect = useCallback((connection: any) => {
         setFa((prev) => {
             const defaultSymbol = prev.alphabet[0] ?? null;
-            const t = createTransition(connection.source, connection.target, defaultSymbol);
-            return addTransition(prev, t);
+            return addTransition(prev, createTransition(connection.source, connection.target, defaultSymbol));
         });
-    }, []);
+    }, [setFa]);
 
-    const onNodesDelete = useCallback((deletedNodes: Node[]) => {
+    const onNodesDelete = useCallback((deletedNodes: any[]) => {
         setFa((prev) => {
             let updatedFa = { ...prev };
-            deletedNodes.forEach(node => {
-                updatedFa = removeState(updatedFa, node.id);
-            });
+            deletedNodes.forEach(node => { updatedFa = removeState(updatedFa, node.id); });
             return updatedFa;
         });
-    }, []);
+    }, [setFa]);
 
-    const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
+    const onEdgesDelete = useCallback((deletedEdges: any[]) => {
         setFa((prev) => {
             let updatedFa = { ...prev };
             deletedEdges.forEach(edge => {
-                const transitionsToRemove = prev.transitions.filter(
-                    t => t.from === edge.source && t.to === edge.target
-                );
-                transitionsToRemove.forEach(t => {
-                    updatedFa = removeTransition(updatedFa, t.id);
-                });
+                const transitionsToRemove = prev.transitions.filter(t => t.from === edge.source && t.to === edge.target);
+                transitionsToRemove.forEach(t => { updatedFa = removeTransition(updatedFa, t.id); });
             });
             return updatedFa;
         });
-    }, []);
+    }, [setFa]);
+
+    const handleSimulationRun = useCallback((input: string) => {
+        const result = runDFA(fa as DFA, input);
+        if (result.accepted) {
+            alert("String ACCEPTED by DFA");
+        } else {
+            alert(`String NOT accepted by DFA"}`);
+        }
+    }, [fa]);
+
+    const handleKindChange = useCallback((nextKind: typeof fa.kind) => {
+        setFa(prev => ({ ...prev, kind: nextKind }));
+    }, [setFa]);
 
     return (
-        <div className="w-full h-screen bg-stone-100">
+        <div className="w-full h-screen bg-stone-100 relative">
+            <SimulationControls
+                faKind={fa.kind}
+                onKindChange={handleKindChange}
+                onSimulate={handleSimulationRun}
+                canRunSimulation={canRunSimulation}
+                hasWarnings={validationErrors.length > 0}
+            />
+
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -242,11 +140,12 @@ function AutomataCanvasContent() {
                 deleteKeyCode={['Backspace', 'Delete']}
                 selectionKeyCode={['Shift']}
                 edgesFocusable={true}
-            //connectionMode="loose"
             >
                 <Background />
                 <Controls />
             </ReactFlow>
+
+            <ValidationErrorPanel errors={validationErrors} a={fa} />
         </div>
     );
 }

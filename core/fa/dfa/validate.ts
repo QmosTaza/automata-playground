@@ -12,16 +12,18 @@ export function validateDFA(fa: DFA): ValidationResult {
                 transitionId: t.id
             })
         }
-        if (t.symbol !== null && t.symbol !== undefined && 
-            countMatchingTransitions(fa, t.from, t.symbol) !== 1) {
-            errors.push({
-                type: "NON_DETERMINISTIC_TRANSITION",
-                stateId: t.from,
-                symbol: t.symbol
-            })
+    }
+    for (const stateId in fa.states) {
+        for (const symbol of fa.alphabet) {
+            if (countMatchingTransitions(fa, stateId, symbol) > 1) {
+                errors.push({
+                    type: "NON_DETERMINISTIC_TRANSITION",
+                    stateId,
+                    symbol
+                });
+            }
         }
     }
-
     for (const stateId of fa.acceptStates) {
         if (!stateExists(fa, stateId)) {
             errors.push({
@@ -30,7 +32,6 @@ export function validateDFA(fa: DFA): ValidationResult {
             })
         }
     }
-
     if (!validateStartState(fa)) {
         errors.push({
             type: "INVALID_START_STATE"

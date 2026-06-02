@@ -72,9 +72,15 @@ export default function StateNode({ id, data, selected }: any) {
             className="relative"
         >
             {data.isStart && (
-                <div className="absolute -left-8 top-1/2 -translate-y-1/2 pointer-events-none text-stone-800 animate-fade-in">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <path d="M2 12h16M12 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                <div className="absolute -left-11 top-1/2 -translate-y-1/2 pointer-events-none text-amber-600 animate-fade-in z-50 select-none">
+                    <svg width="40" height="20" viewBox="0 0 45 20" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M 2 10 L 42 10" strokeLinecap="round" />
+                        <path
+                            d="M 34 4 Q 35 10 34 16 L 45 10 Z"
+                            fill="currentColor"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                        />
                     </svg>
                 </div>
             )}
