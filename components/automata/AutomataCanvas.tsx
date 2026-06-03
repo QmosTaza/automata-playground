@@ -2,18 +2,19 @@
 
 import { ReactFlow, Background, Controls, ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 
 import StateNode from "./StateNode";
 import TransitionEdge from "./TransitionEdge";
 import SimulationControls from "./SimulationControls";
+import SimulationStepper from "./SimulationStepper";
 import ValidationErrorPanel from "./ValidationErrorPanel";
 
 import { EDGE_STYLE } from "@/visualizers";
 import { useAutomata } from "@/hooks/useAutomata";
 import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa";
 import { runDFA, makeFAComplete } from "@/core/fa";
-import { DFA } from "@/types";
+import { DFA, SimulationStep, SimulationResult } from "@/types";
 import { generateId } from "@/core/shared";
 import InspectorPanel from "./InspectorPanel";
 
@@ -45,9 +46,12 @@ function AutomataCanvasContent() {
     const {
         fa, setFa, nodes, edges,
         onNodesChange, onEdgesChange, onNodeDragStop,
-        validationErrors, canRunSimulation
+        validationErrors, canRunSimulation,
+        activeStateId, setActiveStateId
     } = useAutomata(initialFA);
 
+    const [simulationResults, setSimulationResults] = useState<SimulationResult | SimulationResult[] | null>(null);
+   
     const isConnectingRef = useRef(false);
 
     const onConnectStart = useCallback(() => {
@@ -104,36 +108,35 @@ function AutomataCanvasContent() {
 
     const handleSimulationRun = useCallback((input: string) => {
         const result = runDFA(fa as DFA, input);
-        if (result.accepted) {
-            alert("String ACCEPTED by DFA");
-        } else {
-            alert(`String NOT accepted by DFA"}`);
+        setSimulationResults(result);
+        if (result.steps && result.steps.length > 0) {
+            setActiveStateId(result.steps[0].state);
         }
-    }, [fa]);
+    }, [fa, setActiveStateId]);
 
     const handleKindChange = useCallback((nextKind: typeof fa.kind) => {
         setFa(prev => ({ ...prev, kind: nextKind }));
     }, [setFa]);
 
     const handleAutomataChange = useCallback((nextFa: typeof fa) => {
-    const prevStatesCount = Object.keys(fa.states).length;
-    const nextStatesCount = Object.keys(nextFa.states).length;
+        const prevStatesCount = Object.keys(fa.states).length;
+        const nextStatesCount = Object.keys(nextFa.states).length;
 
-    if (nextStatesCount > prevStatesCount) {
-        const newId = Object.keys(nextFa.states).find(id => !fa.states[id]);
-        
-        if (newId) {
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            const flowPosition = screenToFlowPosition({ x: centerX, y: centerY });
+        if (nextStatesCount > prevStatesCount) {
+            const newId = Object.keys(nextFa.states).find(id => !fa.states[id]);
 
-            nextFa.states[newId].x = flowPosition.x;
-            nextFa.states[newId].y = flowPosition.y;
+            if (newId) {
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const flowPosition = screenToFlowPosition({ x: centerX, y: centerY });
+
+                nextFa.states[newId].x = flowPosition.x;
+                nextFa.states[newId].y = flowPosition.y;
+            }
         }
-    }
 
-    setFa(nextFa);
-}, [fa, setFa, screenToFlowPosition]);
+        setFa(nextFa);
+    }, [fa, setFa, screenToFlowPosition]);
 
     return (
         <div className="w-full h-screen bg-stone-100 relative">
@@ -147,7 +150,16 @@ function AutomataCanvasContent() {
                 hasWarnings={validationErrors.length > 0}
             />
 
-            <InspectorPanel 
+            {simulationResults && (
+                <SimulationStepper
+                    fa={fa}
+                    results={simulationResults}
+                    onActiveStateChange={setActiveStateId}
+                    onClose={() => setSimulationResults(null)}
+                />
+            )}
+
+            <InspectorPanel
                 automaton={fa}
                 onAutomatonChange={handleAutomataChange}
             />
@@ -176,7 +188,7 @@ function AutomataCanvasContent() {
                 <Background />
                 <Controls
                     position="bottom-right"
-                    showInteractive={false} 
+                    showInteractive={false}
                     className="!bg-white/95 !backdrop-blur-md !border !border-stone-200 !rounded-xl !shadow-xl !overflow-hidden !m-4
                    [&_button]:!bg-transparent [&_button]:!border-stone-100 [&_button]:hover:!bg-stone-100 [&_button]:!transition-colors
                    [&_svg]:!fill-amber-700"

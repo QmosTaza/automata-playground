@@ -266,6 +266,11 @@ export function getStateFromId (fa: FiniteAutomaton, id: StateId | undefined) : 
     return fa.states[id]
 }
 
+export function getStateLabelFromId(fa: FiniteAutomaton, id: string | undefined): string {
+    if (!id) return "—";
+    return fa.states[id]?.label ?? id;
+}
+
 export function getTransitionFromId (fa: FiniteAutomaton, id: TransitionId | undefined) : Transition | undefined{
     return fa.transitions.find(
         transition => transition.id === id

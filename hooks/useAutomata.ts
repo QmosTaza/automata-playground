@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Node, Edge, applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
-import { FiniteAutomaton, DFA } from "@/types";
+import { FiniteAutomaton, DFA, NFA, LambdaNFA, AutomatonBase } from "@/types";
 import { faToNodes, faToEdges } from "@/visualizers";
 import {
     addState, createState, addTransition, createTransition,
@@ -14,6 +14,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
     const [fa, setFa] = useState<FiniteAutomaton>(initialFA);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
+    const [activeStateId, setActiveStateId] = useState<string | null>(null);
 
     const onToggleAccept = useCallback((id: string) => {
         setFa(prev => toggleAcceptState(prev, id));
@@ -64,7 +65,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
 
     useEffect(() => {
         setNodes((currentNodes) => {
-            const nextNodes = faToNodes(fa, onToggleAccept, onRename, onToggleStart);
+            const nextNodes = faToNodes(fa, onToggleAccept, onRename, onToggleStart, activeStateId);
             return nextNodes.map(newNode => {
                 const existingNode = currentNodes.find(n => n.id === newNode.id);
                 return {
@@ -74,13 +75,14 @@ export function useAutomata(initialFA: FiniteAutomaton) {
                     data: {
                         ...newNode.data,
                         isStart: fa.startStates.includes(newNode.id),
-                        accepting: fa.acceptStates.includes(newNode.id)
+                        accepting: fa.acceptStates.includes(newNode.id),
+                        isActive: activeStateId === newNode.id
                     }
                 };
             });
         });
         setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
-    }, [fa, onToggleAccept, onRename, onToggleStart, handleUpdateSymbols, handleRemoveEdge]);
+    }, [fa, onToggleAccept, onRename, onToggleStart, handleUpdateSymbols, handleRemoveEdge, activeStateId]);
 
     const onNodesChange = useCallback((changes: any) => {
         setNodes((nds) => applyNodeChanges(changes, nds));
@@ -106,8 +108,8 @@ export function useAutomata(initialFA: FiniteAutomaton) {
 
     const validationErrors = (() => {
         if (fa.kind === "dfa") {
-            const dfaErrors = validateDFA(fa as DFA);
-            const compErrors = validateCompleteness(fa as DFA);
+            const dfaErrors = validateDFA(fa as DFA & AutomatonBase);
+            const compErrors = validateCompleteness(fa as DFA & AutomatonBase);
             return [...dfaErrors.errors, ...compErrors];
         }
         return [];
@@ -131,6 +133,8 @@ export function useAutomata(initialFA: FiniteAutomaton) {
         onToggleAccept,
         onRename,
         onToggleStart,
+        activeStateId,
+        setActiveStateId,
         handleUpdateSymbols,
         handleRemoveEdge,
         canRunSimulation

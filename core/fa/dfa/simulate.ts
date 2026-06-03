@@ -5,14 +5,24 @@ export function runDFA(fa: DFA, input: string): SimulationResult {
     let currentState = fa.startStates[0]
     const steps: SimulationStep[] = []
 
+    steps.push({
+        state: currentState,
+        stepNumber: 0,
+        symbol: null,
+        remainingInput: input
+    })
+
+    if (input.length === 0) {
+        return {
+            accepted: fa.acceptStates.includes(currentState),
+            steps
+        }
+    }
+
     for (let i = 0; i < input.length; i++) {
         const symbol = input[i]
-        steps.push({
-            state: currentState,
-            stepNumber: i,
-            symbol,
-            remainingInput: input.slice(i)
-        })
+        const remaining = input.slice(i + 1)
+
         if (!fa.alphabet.includes(symbol)) {
             return {
                 accepted: false,
@@ -29,6 +39,13 @@ export function runDFA(fa: DFA, input: string): SimulationResult {
             }
         }
         currentState = nextState
+        
+        steps.push({
+            state: currentState,
+            stepNumber: steps.length,
+            symbol,
+            remainingInput: remaining
+        })
     }
     return {
         accepted: fa.acceptStates.includes(currentState),
