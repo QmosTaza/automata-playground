@@ -17,8 +17,6 @@ export function runNFA(fa: NFA, input: string): SimulationResult[] {
 }
 
 function exploreNFAPath(fa: NFA, remainingInput: string, currentStateId: StateId, currentSteps: SimulationStep[], globalResults: SimulationResult[]) {
-    const nextSymbol = remainingInput.length > 0 ? remainingInput[0] : null
-
     if (remainingInput.length === 0) {
         globalResults.push({
             accepted: fa.acceptStates.includes(currentStateId),

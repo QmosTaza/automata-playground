@@ -13,8 +13,8 @@ import ValidationErrorPanel from "./ValidationErrorPanel";
 import { EDGE_STYLE } from "@/visualizers";
 import { useAutomata } from "@/hooks/useAutomata";
 import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa";
-import { runDFA, makeFAComplete, runNFA } from "@/core/fa";
-import { DFA, NFA, SimulationStep, SimulationResult } from "@/types";
+import { runDFA, makeFAComplete, runNFA, runLambdaNFA } from "@/core/fa";
+import { DFA, NFA, LambdaNFA, SimulationStep, SimulationResult } from "@/types";
 import { generateId } from "@/core/shared";
 import InspectorPanel from "./InspectorPanel";
 
@@ -28,14 +28,14 @@ const initialFA = {
     name: "DFA 1",
     createdAt: Date.now(),
     states: {
-        q0: { id: q0Id, label: "q0", x: 100, y: 100 },
-        q1: { id: q1Id, label: "q1", x: 300, y: 100 }
+        [q0Id]: { id: q0Id, label: "q0", x: 100, y: 100 },
+        [q1Id]: { id: q1Id, label: "q1", x: 300, y: 100 }
     },
     alphabet: ["a", "b"],
     transitions: [
-        { id: generateId(), from: "q0", to: "q1", symbol: "a" },
-        { id: generateId(), from: "q0", to: "q1", symbol: "b" },
-        { id: generateId(), from: "q1", to: "q1", symbol: "a" }
+        { id: generateId(), from: q0Id, to: q1Id, symbol: "a" },
+        { id: generateId(), from: q0Id, to: q1Id, symbol: "b" },
+        { id: generateId(), from: q1Id, to: q1Id, symbol: "a" }
     ],
     startStates: [q0Id],
     acceptStates: [q1Id],
@@ -116,8 +116,14 @@ function AutomataCanvasContent() {
             if (result.steps && result.steps.length > 0) {
                 setActiveStateId(result.steps[0].state);
             }
-        } else {
+        } else if (fa.kind === "nfa") {
             const results = runNFA(fa as NFA, input);
+            setSimulationResults(results);
+            if (results.length > 0 && results[0].steps && results[0].steps.length > 0) {
+                setActiveStateId(results[0].steps[0].state);
+            }
+        } else if (fa.kind === "lambda-nfa") {
+            const results = runLambdaNFA(fa as LambdaNFA, input);
             setSimulationResults(results);
             if (results.length > 0 && results[0].steps && results[0].steps.length > 0) {
                 setActiveStateId(results[0].steps[0].state);
