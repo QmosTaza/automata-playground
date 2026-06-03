@@ -13,7 +13,7 @@ import ValidationErrorPanel from "./ValidationErrorPanel";
 import { EDGE_STYLE } from "@/visualizers";
 import { useAutomata } from "@/hooks/useAutomata";
 import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa";
-import { runDFA, makeFAComplete, runNFA, runLambdaNFA } from "@/core/fa";
+import { runDFA, makeDFAComplete, runNFA, runLambdaNFA } from "@/core/fa";
 import { DFA, NFA, LambdaNFA, SimulationStep, SimulationResult } from "@/types";
 import { generateId } from "@/core/shared";
 import InspectorPanel from "./InspectorPanel";

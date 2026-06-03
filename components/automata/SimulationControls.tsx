@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
-import { makeFAComplete } from "@/core/fa";
+import { makeDFAComplete, minimizeDFA } from "@/core/fa";
 
 interface SimulationControlsProps {
     fa: FiniteAutomaton;
@@ -26,7 +26,12 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
     };
 
     const handleMakeComplete = () => {
-        const completedFa = makeFAComplete(fa);
+        const completedFa = makeDFAComplete(fa);
+        onAutomataChange(completedFa);
+    };
+
+    const handleMinimize = () => {
+        const completedFa = minimizeDFA(fa);
         onAutomataChange(completedFa);
     };
 
@@ -94,6 +99,17 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                             <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
                         </svg>
                         <span>Make Complete</span>
+                    </button>
+
+                    <button
+                        onClick={handleMinimize}
+                        title="Add a sink state and redirect missing transitions to make the DFA complete"
+                        className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                    >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-700">
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                        </svg>
+                        <span>Minimize</span>
                     </button>
 
                     {/* FUTURE DFA ALGORITHMS HERE */}

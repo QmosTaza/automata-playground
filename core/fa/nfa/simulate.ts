@@ -1,5 +1,5 @@
 import { NFA, StateId, State, Transition, SimulationResult, SimulationStep } from "../../../types"
-
+import { getTransitionsFromState } from "../edit";
 
 export function runNFA(fa: NFA, input: string): SimulationResult[] {
     const allPathResults: SimulationResult[] = []
@@ -76,8 +76,4 @@ function getNextStatesNFA(fa: NFA, symbol: string, currentState: StateId): State
     return nextStates
 }
 
-function getTransitionsFromState(fa: NFA, currentState: StateId): Transition[] {
-    return fa.transitions.filter(
-        t => t.from === currentState
-    )
-}
+

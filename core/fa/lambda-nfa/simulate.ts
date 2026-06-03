@@ -1,5 +1,5 @@
 import { NFA, StateId, State, Transition, SimulationResult, SimulationStep, LambdaNFA } from "../../../types"
-
+import { getTransitionsFromState } from "../edit";
 
 export function runLambdaNFA(fa: LambdaNFA, input: string): SimulationResult[] {
     const allPathResults: SimulationResult[] = []
@@ -107,8 +107,3 @@ function getLambdaClosure(fa: LambdaNFA, currentState: StateId): StateId[]{
     return Array.from(closure);
 }
 
-function getTransitionsFromState(fa: LambdaNFA, currentState: StateId): Transition[] {
-    return fa.transitions.filter(
-        t => t.from === currentState
-    )
-}

@@ -283,3 +283,14 @@ export function renameAutomaton<T extends FiniteAutomaton>(fa: T, newName: strin
         name: newName
     }
 }
+
+export function getTransitionsFromState(fa: DFA | NFA | LambdaNFA, currentState: StateId): Transition[] {
+    return fa.transitions.filter(
+        t => t.from === currentState
+    )
+}
+
+export function getTargetState(fa: FiniteAutomaton, fromId: StateId, symbol: string): StateId | null {
+    const transition = fa.transitions.find(t => t.from === fromId && t.symbol === symbol);
+    return transition ? transition.to : null;
+}

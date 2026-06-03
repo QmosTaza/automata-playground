@@ -1,5 +1,5 @@
 import { DFA, StateId, State, Transition, SimulationResult, SimulationStep } from "../../../types"
-
+import { getTransitionsFromState } from "../edit";
 
 export function runDFA(fa: DFA, input: string): SimulationResult {
     let currentState = fa.startStates[0]
@@ -39,7 +39,7 @@ export function runDFA(fa: DFA, input: string): SimulationResult {
             }
         }
         currentState = nextState
-        
+
         steps.push({
             state: currentState,
             stepNumber: steps.length,
@@ -63,8 +63,4 @@ function getNextStateDFA(fa: DFA, symbol: string, currentState: StateId): StateI
     return undefined
 }
 
-function getTransitionsFromState(fa: DFA, currentState: StateId): Transition[] {
-    return fa.transitions.filter(
-        t => t.from === currentState
-    )
-}
+
