@@ -10,7 +10,8 @@ export function runDFA(fa: DFA, input: string): SimulationResult {
         steps.push({
             state: currentState,
             stepNumber: i,
-            symbol
+            symbol,
+            remainingInput: input.slice(i)
         })
         if (!fa.alphabet.includes(symbol)) {
             return {
