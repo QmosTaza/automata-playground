@@ -13,30 +13,32 @@ import ValidationErrorPanel from "./ValidationErrorPanel";
 import { EDGE_STYLE } from "@/visualizers";
 import { useAutomata } from "@/hooks/useAutomata";
 import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa";
-import { runDFA, makeFAComplete } from "@/core/fa";
-import { DFA, SimulationStep, SimulationResult } from "@/types";
+import { runDFA, makeFAComplete, runNFA } from "@/core/fa";
+import { DFA, NFA, SimulationStep, SimulationResult } from "@/types";
 import { generateId } from "@/core/shared";
 import InspectorPanel from "./InspectorPanel";
 
 const nodeTypes = { state: StateNode };
 const edgeTypes = { transition: TransitionEdge };
 
+const q0Id = generateId();
+const q1Id = generateId();
 const initialFA = {
     id: generateId(),
     name: "DFA 1",
     createdAt: Date.now(),
     states: {
-        q0: { id: "q0", label: "q0", x: 100, y: 100 },
-        q1: { id: "q1", label: "q1", x: 300, y: 100 }
+        q0: { id: q0Id, label: "q0", x: 100, y: 100 },
+        q1: { id: q1Id, label: "q1", x: 300, y: 100 }
     },
     alphabet: ["a", "b"],
     transitions: [
-        { id: "t1", from: "q0", to: "q1", symbol: "a" },
-        { id: "t2", from: "q0", to: "q1", symbol: "b" },
-        { id: "t3", from: "q1", to: "q1", symbol: "a" }
+        { id: generateId(), from: "q0", to: "q1", symbol: "a" },
+        { id: generateId(), from: "q0", to: "q1", symbol: "b" },
+        { id: generateId(), from: "q1", to: "q1", symbol: "a" }
     ],
-    startStates: ["q0"],
-    acceptStates: ["q1"],
+    startStates: [q0Id],
+    acceptStates: [q1Id],
     kind: "dfa" as const
 };
 
@@ -107,10 +109,19 @@ function AutomataCanvasContent() {
     }, [setFa]);
 
     const handleSimulationRun = useCallback((input: string) => {
-        const result = runDFA(fa as DFA, input);
-        setSimulationResults(result);
-        if (result.steps && result.steps.length > 0) {
-            setActiveStateId(result.steps[0].state);
+        if (fa.kind === "dfa") {
+            const result = runDFA(fa as DFA, input);
+            setSimulationResults(result);
+            
+            if (result.steps && result.steps.length > 0) {
+                setActiveStateId(result.steps[0].state);
+            }
+        } else {
+            const results = runNFA(fa as NFA, input);
+            setSimulationResults(results);
+            if (results.length > 0 && results[0].steps && results[0].steps.length > 0) {
+                setActiveStateId(results[0].steps[0].state);
+            }
         }
     }, [fa, setActiveStateId]);
 
