@@ -1,5 +1,5 @@
 export * from "./dfa/simulate"
 export * from "./dfa/validate"
 export * from "./validate"
-export * from "./algorithms"
+export * from "./dfa/algorithms"
 export * from "./edit"

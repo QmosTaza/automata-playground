@@ -240,15 +240,9 @@ export function removeSymbolFromAlphabet(fa: FiniteAutomaton, symbol: string): F
     const alphabet = fa.alphabet.filter(
         s => s !== symbol
     )
-/* 
-    const transitions = fa.transitions.filter(
-        t => t.symbol !== symbol
-    )
- */
     return {
         ...fa,
-        alphabet,
-        //transitions
+        alphabet
     }
 }
 
@@ -276,4 +270,11 @@ export function getTransitionFromId (fa: FiniteAutomaton, id: TransitionId | und
     return fa.transitions.find(
         transition => transition.id === id
     )
+}
+
+export function renameAutomaton<T extends FiniteAutomaton>(fa: T, newName: string): T {
+    return {
+        ...fa,
+        name: newName
+    }
 }

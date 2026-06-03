@@ -1,5 +1,5 @@
-import { FiniteAutomaton, State } from "../../types"
-import { createState, createTransition } from "./edit"
+import { FiniteAutomaton, State } from "../../../types"
+import { createState, createTransition } from "../edit"
 
 export function makeFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
     let sinkState: State | undefined

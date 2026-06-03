@@ -1,4 +1,4 @@
-import { DFA, FiniteAutomaton, Automaton, Transition, StateId, ValidationResult, ValidationError } from "../../types"
+import { DFA, FiniteAutomaton, AutomatonBase, Transition, StateId, ValidationResult, ValidationError } from "../../types"
 
 export function countMatchingTransitions(fa: FiniteAutomaton, stateId: StateId, symbol: string | null | undefined): number {
     return fa.transitions.filter(

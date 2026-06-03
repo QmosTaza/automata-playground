@@ -11,14 +11,19 @@ import ValidationErrorPanel from "./ValidationErrorPanel";
 
 import { EDGE_STYLE } from "@/visualizers";
 import { useAutomata } from "@/hooks/useAutomata";
-import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa/edit";
-import { runDFA } from "@/core/fa/dfa/simulate";
+import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa";
+import { runDFA, makeFAComplete } from "@/core/fa";
 import { DFA } from "@/types";
+import { generateId } from "@/core/shared";
+import InspectorPanel from "./InspectorPanel";
 
 const nodeTypes = { state: StateNode };
 const edgeTypes = { transition: TransitionEdge };
 
 const initialFA = {
+    id: generateId(),
+    name: "DFA 1",
+    createdAt: Date.now(),
     states: {
         q0: { id: "q0", label: "q0", x: 100, y: 100 },
         q1: { id: "q1", label: "q1", x: 300, y: 100 }
@@ -36,7 +41,7 @@ const initialFA = {
 
 function AutomataCanvasContent() {
     const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
-    
+
     const {
         fa, setFa, nodes, edges,
         onNodesChange, onEdgesChange, onNodeDragStop,
@@ -60,8 +65,8 @@ function AutomataCanvasContent() {
 
         const hasSelectedNodes = getNodes().some(node => node.selected);
         const hasSelectedEdges = getEdges().some(edge => edge.selected);
-        
-        if (hasSelectedNodes || hasSelectedEdges) {return;}
+
+        if (hasSelectedNodes || hasSelectedEdges) { return; }
 
         const isPane = target.classList.contains('react-flow__pane') || target.matches('.react-flow__renderer') || target.matches('svg.react-flow__background');
 
@@ -110,14 +115,41 @@ function AutomataCanvasContent() {
         setFa(prev => ({ ...prev, kind: nextKind }));
     }, [setFa]);
 
+    const handleAutomataChange = useCallback((nextFa: typeof fa) => {
+    const prevStatesCount = Object.keys(fa.states).length;
+    const nextStatesCount = Object.keys(nextFa.states).length;
+
+    if (nextStatesCount > prevStatesCount) {
+        const newId = Object.keys(nextFa.states).find(id => !fa.states[id]);
+        
+        if (newId) {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const flowPosition = screenToFlowPosition({ x: centerX, y: centerY });
+
+            nextFa.states[newId].x = flowPosition.x;
+            nextFa.states[newId].y = flowPosition.y;
+        }
+    }
+
+    setFa(nextFa);
+}, [fa, setFa, screenToFlowPosition]);
+
     return (
         <div className="w-full h-screen bg-stone-100 relative">
             <SimulationControls
+                fa={fa}
+                onAutomataChange={handleAutomataChange}
                 faKind={fa.kind}
                 onKindChange={handleKindChange}
                 onSimulate={handleSimulationRun}
                 canRunSimulation={canRunSimulation}
                 hasWarnings={validationErrors.length > 0}
+            />
+
+            <InspectorPanel 
+                automaton={fa}
+                onAutomatonChange={handleAutomataChange}
             />
 
             <ReactFlow
@@ -142,7 +174,13 @@ function AutomataCanvasContent() {
                 edgesFocusable={true}
             >
                 <Background />
-                <Controls />
+                <Controls
+                    position="bottom-right"
+                    showInteractive={false} 
+                    className="!bg-white/95 !backdrop-blur-md !border !border-stone-200 !rounded-xl !shadow-xl !overflow-hidden !m-4
+                   [&_button]:!bg-transparent [&_button]:!border-stone-100 [&_button]:hover:!bg-stone-100 [&_button]:!transition-colors
+                   [&_svg]:!fill-amber-700"
+                />
             </ReactFlow>
 
             <ValidationErrorPanel errors={validationErrors} a={fa} />

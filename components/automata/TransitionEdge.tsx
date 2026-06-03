@@ -16,22 +16,15 @@ export default function TransitionEdge({ id, sourceX, sourceY,
 
     useEffect(() => {
         if (isEditing && containerRef.current) {
-            containerRef.current.focus();
+            containerRef.current?.focus();
         }
-    }, [isEditing]);
+    }, [isEditing, symbols]);
 
     useEffect(() => {
-        if (!isEditing) return;
-
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsEditing(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isEditing]);
+        if (!selected) {
+            setIsEditing(false);
+        }
+    }, [selected]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (!isEditing || !data) return;
@@ -144,6 +137,7 @@ export default function TransitionEdge({ id, sourceX, sourceY,
                 <div
                     ref={containerRef}
                     tabIndex={0}
+                    autoFocus={isEditing}
                     onKeyDown={handleKeyDown}
                     onClick={(e) => {
                         //if (e.shiftKey) return;

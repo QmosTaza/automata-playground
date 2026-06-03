@@ -41,9 +41,9 @@ export default function ValidationErrorPanel({ errors, a }: ValidationErrorPanel
             <ul className="space-y-1.5 text-xs text-stone-600 whitespace-pre-line">
                 {criticalErrors.map((err, idx) => (
                     <li key={`crit-${idx}`} className="bg-red-50 text-red-900 px-2 py-1.5 rounded border border-red-100 animate-fade-in">
-                        {err.type === "INVALID_START_STATE" && "Initial state required\n(Press Shift + Right Click to set starting state)."}
+                        {err.type === "INVALID_START_STATE" && "Initial state required\n(Press Alt + Right Click to set starting state)."}
                         {err.type === "NON_DETERMINISTIC_TRANSITION" && `Non-Deterministic Transition detected. The state '${getStateFromId(a, err.stateId)?.label}' has many transitions for symbol '${err.symbol}'.`}
-                        {err.type === "INVALID_TRANSITION" && `Corrupt transition structure.\nPlease check that the transition from '${getStateFromId(a, getTransitionFromId(a, err.transitionId)?.from)?.label}' to '${getStateFromId(a, getTransitionFromId(a, err.transitionId)?.to)?.label}' with symbol '${getTransitionFromId(a, err.transitionId)?.symbol}'`}
+                        {err.type === "INVALID_TRANSITION" && `Corrupt transition structure.\nPlease check the transition from '${getStateFromId(a, getTransitionFromId(a, err.transitionId)?.from)?.label}' to '${getStateFromId(a, getTransitionFromId(a, err.transitionId)?.to)?.label}' with symbol '${getTransitionFromId(a, err.transitionId)?.symbol}'`}
                         {err.type === "MISSING_STATE" && `State '${err.stateId}' is referenced but does not exist.`}
                     </li>
                 ))}

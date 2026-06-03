@@ -11,15 +11,26 @@ export default function StateNode({ id, data, selected }: any) {
     const [editLabel, setEditLabel] = useState(data.label);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    useEffect(() => {
+        if (isEditing) {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+        }
+    }, [isEditing]);
 
     useEffect(() => {
         setEditLabel(data.label);
         setIsEditing(false);
     }, [data.label]);
 
+    useEffect(() => {
+        if (!selected && isEditing) {
+            handleSave();
+        }
+    }, [selected, isEditing]);
+
     const handleSave = () => {
         const trimmed = editLabel.trim();
-
         setIsEditing(false);
 
         if (trimmed && trimmed !== data.label) {
@@ -33,7 +44,8 @@ export default function StateNode({ id, data, selected }: any) {
         console.log("KEY", e.key);
         if (e.key === "Enter") {
             e.preventDefault();
-            inputRef.current?.blur();
+            //inputRef.current?.blur();
+            handleSave();
         }
         if (e.key === "Escape") {
             setIsEditing(false);
@@ -63,7 +75,7 @@ export default function StateNode({ id, data, selected }: any) {
             onDoubleClick={handleDoubleClick}
             onContextMenu={(e) => {
                 e.preventDefault();
-                if (e.altKey || e.shiftKey) {
+                if (e.altKey || e.ctrlKey) {
                     handleToggleStart(e);
                 } else {
                     data.onToggleAccept(id);
