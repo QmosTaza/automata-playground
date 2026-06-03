@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Automata Playground
 
-## Getting Started
+An interactive, browser-based visual editor and simulation engine for formal language theory. This playground currently allows users to visually design, validate, and debug Deterministic (DFA), Non-Deterministic (NFA), and Empty-Transition ($\lambda$-NFA) finite state machines.
 
-First, run the development server:
+---
 
+## ✨✨ Features ✨✨
+
+* **Interactive Graph Canvas:** Seamless node creation and custom transitions powered by React Flow.
+* **Multi-Paradigm Engines:** Support for:
+    * **DFA:** Linear, deterministic string processing.
+    * **NFA:** Recursive non-deterministic branching tracking parallel execution states.
+    * **$\lambda$-NFA:** Graph traversal utilizing recursive $\lambda$-closures without consuming string characters.
+* **Time-Travel Stepper UI:** Step forward/backward through specific execution timelines. For NFAs/$\lambda$-NFAs, an execution path panel dynamically handles concurrent tree paths, showcasing exactly where a branch dies or gets accepted.
+* **Real-time Integrity Validation:** Active error-tracking panel monitoring missing transitions, incorrect structural schemas or missing initial states.
+
+---
+
+## Tech Stack
+
+* **Frontend Library:** React
+* **Graph Rendering:** React Flow (@xyflow/react)
+* **Styling:** Tailwind CSS
+* **Language:** TypeScript
+
+---
+
+## Roadmap
+
+`automata-playground` is a work in progress! Here are the features currently planned or being actively developed:
+
+* **DFA Minimization:** An optimization tool to automatically merge equivalent states and compress any DFA into its smallest possible version.
+* **Automata Conversions:** Algorithms to convert $\lambda$-NFAs down to standard NFAs, and NFAs up to DFAs (Subset Construction).
+* **Regex Engine:** A feature to type in a Regular Expression and watch the playground automatically generate the corresponding NFA/DFA for it.
+* **Pushdown Automata (PDA):** Expanding the canvas and simulation engine to support stack memory, allowing users to build and step through Context-Free Languages.
+* **Turing Machines:** Infinite tape visualizer to support full Turing Machine simulations.
+* **Save & Export:** The ability to save your custom state machines as a JSON file or export the canvas as an image (PNG/SVG) to share.
+
+---
+---
+
+## ➡➡ Getting Started ⬅⬅
+
+### Prerequisites
+* Node.js (v18+ recommended)
+* pnpm / npm / yarn
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone [https://github.com/QmosTaza/automata-playground.git](https://github.com/QmosTaza/automata-playground.git)
+cd automata-playground
+```
+2. Install dependencies:
+```bash
+npm install
+```
+3. Run the development server:
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. Open http://localhost:3000 in your browser to start building!
