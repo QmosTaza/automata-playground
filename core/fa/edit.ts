@@ -290,7 +290,47 @@ export function getTransitionsFromState(fa: DFA | NFA | LambdaNFA, currentState:
     )
 }
 
+export function getTransitionsToState(fa: DFA | NFA | LambdaNFA, currentState: StateId): Transition[] {
+    return fa.transitions.filter(
+        t => t.to === currentState
+    )
+}
+
 export function getTargetState(fa: FiniteAutomaton, fromId: StateId, symbol: string): StateId | null {
     const transition = fa.transitions.find(t => t.from === fromId && t.symbol === symbol);
     return transition ? transition.to : null;
+}
+
+export function getDirectlyConnectedStates(fa: FiniteAutomaton, originId: StateId): Set<StateId> {
+    const transitions = getTransitionsFromState(fa, originId)
+    const directlyConnectedStates: Set<StateId> = new Set
+
+    for (const t of transitions){
+        directlyConnectedStates.add(t.to)
+    }
+
+    return directlyConnectedStates
+}
+
+//directed connection
+export function statesAreConnected (fa:FiniteAutomaton, originId:StateId, destinationId: StateId) : boolean {
+    const transition = fa.transitions.find(t => t.from === originId && t.to === destinationId)
+    return transition? true : false
+}
+
+//directed accessibility
+export function statesAreAccessible(fa:FiniteAutomaton, originId: StateId, destinationId: StateId, visited: Set<StateId> = new Set()) : boolean{
+    if (originId === destinationId) return true
+    if (statesAreConnected(fa, originId, destinationId)) return true
+
+    if (visited.has(originId)) return false
+    visited.add(originId)
+
+    for (const nextState of getDirectlyConnectedStates(fa, originId)) {
+        if (statesAreAccessible(fa, nextState, destinationId, visited)) {
+            return true
+        }
+    }
+
+    return false;
 }
