@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
-import { renameAutomaton, addSymbolToAlphabet, removeSymbolFromAlphabet, renameState, cleanSymbol, updateTransition, removeTransition } from "@/core/fa/edit";
+import { renameAutomaton, addSymbolToAlphabet, removeSymbolFromAlphabet, renameState, cleanSymbol, updateTransition, removeTransition, stateIsAccessible, stateIsUnreachable } from "@/core/fa/edit";
 
 interface InspectorPanelProps {
     automaton: FiniteAutomaton;
@@ -278,7 +278,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                             Wipe &Sigma;
                                         </button>
 
-                                        {/* deletes states */}
+                                        {/* deletes everything :)) */}
                                         <button
                                             onClick={() => {
                                                 if (confirm("Are you sure you want to clear out the machine?")) {
@@ -372,6 +372,9 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                                 )}
                                                 {(automaton as any).acceptStates?.includes(state.id) && (
                                                     <span className="px-2 py-0.5 bg-green-50 border border-green-200 text-green-700 font-bold rounded-md">Accept</span>
+                                                )}
+                                                {stateIsUnreachable((automaton as any), state.id) && (
+                                                    <span className="px-2 py-0.5 bg-red-50 border border-red-200 text-red-700 font-bold rounded-md">Unreachable</span>
                                                 )}
                                             </div>
                                         </div>
@@ -475,7 +478,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                             {/* REGEX */}
                             <div className="space-y-2.5">
                                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
-                                    REGEX-TO-GRAPH COMPILER
+                                    REGEX-TO-GRAPH COMPILER (Coming soon...)
                                 </label>
                                 <form onSubmit={handleAddSymbol} className="flex gap-2">
                                     <input

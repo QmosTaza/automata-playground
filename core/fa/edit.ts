@@ -340,7 +340,7 @@ export function statesAreConnected (fa:FiniteAutomaton, originId:StateId, destin
 }
 
 //directed accessibility
-export function statesAreAccessible(fa:FiniteAutomaton, originId: StateId, destinationId: StateId, visited: Set<StateId> = new Set()) : boolean{
+export function stateIsAccessible(fa:FiniteAutomaton, originId: StateId, destinationId: StateId, visited: Set<StateId> = new Set()) : boolean{
     if (originId === destinationId) return true
     if (statesAreConnected(fa, originId, destinationId)) return true
 
@@ -348,10 +348,17 @@ export function statesAreAccessible(fa:FiniteAutomaton, originId: StateId, desti
     visited.add(originId)
 
     for (const nextState of getDirectlyConnectedStates(fa, originId)) {
-        if (statesAreAccessible(fa, nextState, destinationId, visited)) {
+        if (stateIsAccessible(fa, nextState, destinationId, visited)) {
             return true
         }
     }
 
     return false;
+}
+
+export function stateIsUnreachable(fa:FiniteAutomaton, stateId: StateId) {
+    for (const startState of fa.startStates) {
+        if (stateIsAccessible(fa,startState,stateId)) {return false}
+    }
+    return true
 }

@@ -1,5 +1,5 @@
 import { DFA, FiniteAutomaton, State, StateId, Transition } from "../../../types"
-import { createState, createTransition, getTransitionsFromState, getTargetStateDFA } from "../edit"
+import { createState, createTransition, getTransitionsFromState, getTargetStateDFA, stateIsUnreachable } from "../edit"
 import { generateId } from "@/core/shared"
 
 export function makeDFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
@@ -42,8 +42,8 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
     const allStateIds = Object.keys(fa.states);
 
     let groups: StateId[][] = [
-        allStateIds.filter(id => fa.acceptStates.includes(id)),
-        allStateIds.filter(id => !fa.acceptStates.includes(id))
+        allStateIds.filter(id => fa.acceptStates.includes(id) && !stateIsUnreachable(fa,id)),
+        allStateIds.filter(id => !fa.acceptStates.includes(id) && !stateIsUnreachable(fa,id))
     ].filter(g => g.length > 0);
 
     let stable = false

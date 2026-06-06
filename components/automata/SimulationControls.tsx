@@ -73,6 +73,11 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                         placeholder="Enter a string (e.g., aab). Leave empty for λ"
                         value={simulationString}
                         onChange={(e) => setSimulationString(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && canRunSimulation) {
+                                onSimulate(simulationString);
+                            }
+                        }}
                         className={`px-3 py-1 bg-stone-50 border rounded-lg text-sm outline-none transition-all w-80 text-stone-800
                             ${!canRunSimulation ? 'border-red-200 opacity-60 cursor-not-allowed' : 'border-stone-300 focus:border-amber-600'}
                         `}
