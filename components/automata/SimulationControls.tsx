@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
-import { makeDFAComplete, minimizeDFA, convertNFAintoDFA } from "@/core/fa";
+import { makeDFAComplete, minimizeDFA, convertNFAtoDFA, convertLambdaNFAtoDFA, convertLambdaNFAtoNFA } from "@/core/fa";
 
 interface SimulationControlsProps {
     fa: FiniteAutomaton;
@@ -36,7 +36,17 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
     };
 
     const handleConvertNFAtoDFA = () => {
-        const convertedDFA = convertNFAintoDFA(fa);
+        const convertedDFA = convertNFAtoDFA(fa);
+        onAutomataChange(convertedDFA);
+    };
+
+    const handleConvertLambdaNFAtoDFA = () => {
+        const convertedDFA = convertLambdaNFAtoDFA(fa);
+        onAutomataChange(convertedDFA);
+    };
+
+    const handleConvertLambdaNFAtoNFA = () => {
+        const convertedDFA = convertLambdaNFAtoNFA(fa);
         onAutomataChange(convertedDFA);
     };
 
@@ -153,13 +163,44 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
             )}
 
             {faKind === "lambda-nfa" && (
-                <div className="flex items-center gap-2 bg-stone-50/90 border border-stone-200/80 px-4 py-1.5 rounded-full shadow-md backdrop-blur-sm animate-fade-in pointer-events-auto">
-                    <span className="text-[10px] tracking-wider font-bold text-stone-400 select-none">
-                        λ-NFA TOOLS:
+                <div className="flex items-center gap-2 bg-white/90 border border-stone-200/80 px-4 py-1.5 rounded-full shadow-md backdrop-blur-sm animate-fade-in pointer-events-auto">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-stone-400 mr-1 select-none">
+                        NFA Tools:
                     </span>
-                    <span className="text-[11px] font-medium text-stone-500 italic px-1">
-                        Subset Construction coming soon...
-                    </span>
+
+                    <button
+                        onClick={handleConvertLambdaNFAtoDFA}
+                        title="Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction"
+                        className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                    >
+                        <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="text-amber-700"
+                        >
+                            <path d="M12 2c.5 5.5 5 9.5 10 10-5 .5-9.5 4.5-10 10-.5-5.5-4.5-9.5-10-10 5-.5 9.5-4.5 10-10z" />
+                        </svg>
+                        <span>Convert to DFA</span>
+                    </button>
+
+                    <button
+                        onClick={handleConvertLambdaNFAtoNFA}
+                        title="Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction"
+                        className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                    >
+                        <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="text-amber-700"
+                        >
+                            <path d="M12 2c.5 5.5 5 9.5 10 10-5 .5-9.5 4.5-10 10-.5-5.5-4.5-9.5-10-10 5-.5 9.5-4.5 10-10z" />
+                        </svg>
+                        <span>Convert to NFA</span>
+                    </button>
                 </div>
             )}
         </div>

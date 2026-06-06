@@ -20,7 +20,7 @@ export function runLambdaNFA(fa: LambdaNFA, input: string): SimulationResult[] {
     return allPathResults
 }
 
-function exploreLambdaNFAPath(fa: LambdaNFA, remainingInput: string, currentStateId: StateId, currentSteps: SimulationStep[], visitedLambdaTransitions: Set<string>, globalResults: SimulationResult[]) {
+export function exploreLambdaNFAPath(fa: LambdaNFA, remainingInput: string, currentStateId: StateId, currentSteps: SimulationStep[], visitedLambdaTransitions: Set<string>, globalResults: SimulationResult[]) {
     const transitions = getTransitionsFromState(fa, currentStateId);
     const lambdaTransitions = transitions.filter(t => t.symbol === null);
     
@@ -90,7 +90,7 @@ function exploreLambdaNFAPath(fa: LambdaNFA, remainingInput: string, currentStat
 
 }
 
-function getLambdaClosure(fa: LambdaNFA, currentState: StateId): StateId[]{
+export function getLambdaClosure(fa: LambdaNFA, currentState: StateId): StateId[]{
     const closure = new Set<StateId>([currentState]);
     const queue: StateId[] = [currentState];
 

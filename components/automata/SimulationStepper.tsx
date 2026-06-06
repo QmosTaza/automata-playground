@@ -14,7 +14,7 @@ interface SimulationStepperProps {
 export default function SimulationStepper({ fa, results, onActiveStateChange, onClose }: SimulationStepperProps) {
     // Normalise input
     const branches = Array.isArray(results) ? results : [results];
-    
+
     const [selectedBranchIdx, setSelectedBranchIdx] = useState(0);
     const [currentStepIdx, setCurrentStepIdx] = useState(0);
 
@@ -52,9 +52,12 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
 
     const isAccepted = currentBranch.accepted;
 
+    const isCurrentStateAccepting =
+        currentStep && fa.acceptStates.includes(currentStep.state);
+
     return (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-5xl flex gap-4 pointer-events-none">
-            
+
             {/* BRANCH PANEL */}
             {branches.length > 1 && (
                 <div className="w-52 bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl rounded-2xl p-3 flex flex-col gap-1.5 max-h-56 overflow-y-auto pointer-events-auto">
@@ -82,7 +85,7 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
             )}
 
             {/* REPRODUCE STEP-BY-STEP */}
-            <div className="flex-1 bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl rounded-2xl overflow-hidden flex flex-col pointer-events-auto">    
+            <div className="flex-1 bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl rounded-2xl overflow-hidden flex flex-col pointer-events-auto">
                 {/* FINAL STATE BANNER */}
                 <div className={`px-5 py-2 flex justify-between items-center transition-colors duration-300 shadow-inner
                     ${isAccepted ? "bg-emerald-600" : "bg-stone-800"}
@@ -90,19 +93,19 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
                 `}>
                     <div className="flex items-center gap-2">
                         {isAccepted ? (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-white"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-white"><polyline points="20 6 9 17 4 12" /></svg>
                         ) : (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-white"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-white"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                         )}
                         <span className="text-white text-[11px] font-bold uppercase tracking-wider select-none">
-                            {currentBranch.error 
+                            {currentBranch.error
                                 ? `Simulation Halted: ${currentBranch.error}`
                                 : isAccepted ? "String Accepted by Machine" : "String Rejected (Ends in Non-Accepting State)"
                             }
                         </span>
                     </div>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="text-white/90 hover:text-white font-semibold text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg transition-all shadow-sm active:scale-95 cursor-pointer border border-white/10"
                     >
                         Close
@@ -111,21 +114,21 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
 
                 {/* STEPPER BODY */}
                 <div className="p-5 flex flex-col gap-5">
-                    
+
                     {/* STRING VISUALIZER */}
                     <div className="flex flex-col gap-3.5 bg-stone-50/50 border border-stone-100 rounded-xl p-4">
                         {/* CHARACTERS */}
                         <div className="flex justify-center items-center gap-1.5 overflow-x-auto py-0.5">
                             {steps.map((step, i) => (
-                                <div 
+                                <div
                                     key={i}
                                     className={`flex flex-col items-center transition-all duration-200 shrink-0
                                         ${i === currentStepIdx ? "scale-105 opacity-100" : "opacity-30"}
                                     `}
                                 >
                                     <span className={`w-8 h-8 flex items-center justify-center rounded-lg font-mono font-bold text-xs border-2 transition-all
-                                        ${i === currentStepIdx 
-                                            ? "bg-amber-100 border-amber-600 text-amber-950 shadow-sm" 
+                                        ${i === currentStepIdx
+                                            ? "bg-amber-100 border-amber-600 text-amber-950 shadow-sm"
                                             : "bg-white border-stone-200 text-stone-500"}
                                     `}>
                                         {step.symbol === null ? "λ" : step.symbol}
@@ -146,8 +149,8 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
                                     )}
                                     {idx > 0 && <span className="text-stone-300 font-light">→</span>}
                                     <span className={`px-2 py-0.5 rounded font-mono font-bold text-xs shadow-sm border
-                                        ${idx === currentStepIdx 
-                                            ? "bg-amber-600 border-amber-700 text-white font-black scale-105 ring-2 ring-amber-600/10" 
+                                        ${idx === currentStepIdx
+                                            ? "bg-amber-600 border-amber-700 text-white font-black scale-105 ring-2 ring-amber-600/10"
                                             : "bg-white border-stone-200 text-stone-700"
                                         }
                                     `}>
@@ -160,20 +163,25 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
 
                     {/* CONTROLLERS */}
                     <div className="flex items-center justify-between border-t border-stone-100 pt-3.5">
-                        
+
                         {/* CURRENT STATES */}
                         <div className="flex flex-col select-none">
                             <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
                                 Current Location
                             </span>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <span className="px-3 py-1 bg-stone-900 text-stone-50 text-xs font-mono font-bold rounded-lg shadow-sm border border-stone-950">
+                                <span
+                                    className={`px-3 py-1 text-xs font-mono font-bold rounded-lg shadow-sm border ${isCurrentStateAccepting
+                                            ? "bg-emerald-600 text-white border-emerald-700"
+                                            : "bg-stone-900 text-stone-50 border-stone-950"
+                                        }`}
+                                >
                                     {currentStep ? getStateLabelFromId(fa, currentStep.state) : "—"}
                                 </span>
                                 {currentStepIdx === steps.length - 1 && (
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border
-                                        ${isAccepted 
-                                            ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
+                                        ${isAccepted
+                                            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                                             : "bg-stone-100 border-stone-200 text-stone-600"}
                                     `}>
                                         {isAccepted ? "Final State (Match)" : "Final State (No Match)"}
@@ -184,30 +192,30 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
 
                         {/* NAV BUTTONS */}
                         <div className="flex gap-2">
-                            <button 
+                            <button
                                 onClick={handlePrev}
                                 disabled={currentStepIdx === 0}
                                 className={`font-semibold text-xs px-4 py-1.5 rounded-lg transition-all shadow-sm border flex items-center gap-1
-                                    ${currentStepIdx !== 0 
-                                        ? 'bg-white border-stone-300 text-stone-700 hover:bg-stone-50 cursor-pointer active:scale-95' 
+                                    ${currentStepIdx !== 0
+                                        ? 'bg-white border-stone-300 text-stone-700 hover:bg-stone-50 cursor-pointer active:scale-95'
                                         : 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'}
                                 `}
                             >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
                                 <span>Previous</span>
                             </button>
-                            
-                            <button 
+
+                            <button
                                 onClick={handleNext}
                                 disabled={currentStepIdx === steps.length - 1}
                                 className={`font-semibold text-xs px-5 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-1
-                                    ${currentStepIdx === steps.length - 1 
-                                        ? 'bg-stone-200 text-stone-400 cursor-not-allowed' 
+                                    ${currentStepIdx === steps.length - 1
+                                        ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                                         : 'bg-amber-700 hover:bg-amber-800 text-white cursor-pointer active:scale-95'}
                                 `}
                             >
                                 <span>Next Step</span>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
                             </button>
                         </div>
                     </div>

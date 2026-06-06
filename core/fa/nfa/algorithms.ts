@@ -1,7 +1,7 @@
 import { FiniteAutomaton, State, StateId, Transition } from "../../../types";
 import { generateId } from "@/core/shared";
 
-export function convertNFAintoDFA(fa: FiniteAutomaton): FiniteAutomaton {
+export function convertNFAtoDFA(fa: FiniteAutomaton): FiniteAutomaton {
     const initialStateIds = fa.startStates && fa.startStates.length > 0 ? fa.startStates : []
     const initialSet = new Set<StateId>(initialStateIds);
     const initialSignature = Array.from(initialSet).sort().join("_");
@@ -85,7 +85,7 @@ export function convertNFAintoDFA(fa: FiniteAutomaton): FiniteAutomaton {
     };
 }
 
-function getTargetStatesForSubset(fa: FiniteAutomaton, compoundId: StateId, symbol: string): Set<StateId> {
+export function getTargetStatesForSubset(fa: FiniteAutomaton, compoundId: StateId, symbol: string): Set<StateId> {
     const targetSet = new Set<StateId>();
     const componentIds = compoundId.split("_");
 
@@ -99,7 +99,7 @@ function getTargetStatesForSubset(fa: FiniteAutomaton, compoundId: StateId, symb
     return targetSet;
 }
 
-function createDFAState(fa: FiniteAutomaton, properId: StateId, set: Set<StateId>): State {
+export function createDFAState(fa: FiniteAutomaton, properId: StateId, set: Set<StateId>): State {
     const stateIdArray = Array.from(set).sort();
     
     if (set.size === 1) {
