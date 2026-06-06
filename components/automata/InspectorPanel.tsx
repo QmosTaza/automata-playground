@@ -13,7 +13,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
     const [isOpen, setIsOpen] = useState(true);
     const [activeSection, setActiveSection] = useState<"overview" | "editor" | "regex">("overview");
     const [newSymbol, setNewSymbol] = useState("");
-    const [regex, setRegex] = useState("");
+    //const [regex, setRegex] = useState("");
     const [bulkInputs, setBulkInputs] = useState("");
 
     const hasAlphabet = 'alphabet' in automaton;
@@ -218,6 +218,27 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                             </span>
                                             <span>&#125;</span>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SHOW EQ REGEX */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
+                                    Equivalent Regular Expression
+                                </label>
+                                <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-between text-xs font-mono text-stone-600 select-text gap-2 nodrag nowheel">
+                                    <div className="flex items-baseline gap-1.5 overflow-x-auto whitespace-nowrap py-0.5 no-scrollbar w-full select-text">
+                                        <span className="shrink-0 font-bold text-stone-500 select-none">R =</span>
+                                        {automaton.regex && automaton.regex !== "∅" ? (
+                                            <span className="text-amber-800 font-semibold tracking-wide inline-block select-text cursor-text">
+                                                {automaton.regex}
+                                            </span>
+                                        ) : (
+                                            <span className="italic text-stone-400 font-normal select-none">
+                                                ∅ (No expression linked)
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -480,22 +501,27 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
                                     REGEX-TO-GRAPH COMPILER (Coming soon...)
                                 </label>
-                                <form onSubmit={handleAddSymbol} className="flex gap-2">
+                                <div className="flex gap-2">
                                     <input
                                         type="text"
-                                        maxLength={1}
                                         placeholder="Add regex (e.g., (a|b)*abb )"
-                                        value={regex}
-                                        onChange={(e) => setRegex(e.target.value)}
+                                        value={automaton.regex || ""}
+                                        onChange={(e) => onAutomatonChange({
+                                            ...automaton,
+                                            regex: e.target.value
+                                        })}
                                         className="flex-1 px-3 py-1 bg-stone-50 border border-stone-300 rounded-lg text-sm text-stone-800 outline-none focus:border-amber-600 transition-colors"
                                     />
                                     <button
-                                        onClick={() => handleCompileRegex(regex || "(a|b)*abb")}
+                                        onClick={() => handleCompileRegex(automaton.regex || "")}
                                         className="px-4 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs rounded-lg shadow-sm transition-all cursor-pointer active:scale-95 whitespace-nowrap mr-1"
                                     >
                                         Compile
                                     </button>
-                                </form>
+                                </div>
+                                <p className="text-[10px] text-stone-500 leading-relaxed italic">
+                                    Compiling will transform this regex into a {isLambdaNFA ? "Lambda-NFA" : "NFA"} using Thompson's Construction.
+                                </p>
                             </div>
 
                             {/* MATH EXPRESSION */}

@@ -2,7 +2,7 @@
 
 import { ReactFlow, Background, Controls, ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useMemo, useEffect } from "react";
 
 import StateNode from "./StateNode";
 import TransitionEdge from "./TransitionEdge";
@@ -15,7 +15,7 @@ import { useAutomata } from "@/hooks/useAutomata";
 import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa";
 import { runDFA, makeDFAComplete, runNFA, runLambdaNFA } from "@/core/fa";
 import { DFA, NFA, LambdaNFA, SimulationStep, SimulationResult } from "@/types";
-import { generateId } from "@/core/shared";
+import { generateId, convertAutomatonToRegex } from "@/core/shared";
 import InspectorPanel from "./InspectorPanel";
 
 const nodeTypes = { state: StateNode };
@@ -43,6 +43,12 @@ const initialFA = {
 };
 
 function AutomataCanvasContent() {
+
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
     const {
@@ -53,7 +59,7 @@ function AutomataCanvasContent() {
     } = useAutomata(initialFA);
 
     const [simulationResults, setSimulationResults] = useState<SimulationResult | SimulationResult[] | null>(null);
-   
+
     const isConnectingRef = useRef(false);
 
     const onConnectStart = useCallback(() => {
@@ -112,7 +118,7 @@ function AutomataCanvasContent() {
         if (fa.kind === "dfa") {
             const result = runDFA(fa as DFA, input);
             setSimulationResults(result);
-            
+
             if (result.steps && result.steps.length > 0) {
                 setActiveStateId(result.steps[0].state);
             }
@@ -151,14 +157,26 @@ function AutomataCanvasContent() {
                 nextFa.states[newId].y = flowPosition.y;
             }
         }
-
         setFa(nextFa);
     }, [fa, setFa, screenToFlowPosition]);
+
+    const computedAutomaton = useMemo(() => {
+        if (!isMounted || !canRunSimulation) {
+            return { ...fa, regex: "∅" };
+        }
+        try {
+            const freshRegex = convertAutomatonToRegex(fa);
+            return { ...fa, regex: freshRegex };
+        } catch (error) {
+            console.error("Automaton to Regex calculation failed:", error);
+            return { ...fa, regex: "Error generating expression" };
+        }
+    }, [fa.states, fa.transitions, fa.startStates, fa.acceptStates, canRunSimulation, isMounted]);
 
     return (
         <div className="w-full h-screen bg-stone-100 relative">
             <SimulationControls
-                fa={fa}
+                fa={computedAutomaton}
                 onAutomataChange={handleAutomataChange}
                 faKind={fa.kind}
                 onKindChange={handleKindChange}
@@ -169,7 +187,7 @@ function AutomataCanvasContent() {
 
             {simulationResults && (
                 <SimulationStepper
-                    fa={fa}
+                    fa={computedAutomaton}
                     results={simulationResults}
                     onActiveStateChange={setActiveStateId}
                     onClose={() => setSimulationResults(null)}
@@ -177,7 +195,7 @@ function AutomataCanvasContent() {
             )}
 
             <InspectorPanel
-                automaton={fa}
+                automaton={computedAutomaton}
                 onAutomatonChange={handleAutomataChange}
             />
 

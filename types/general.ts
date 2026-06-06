@@ -12,6 +12,7 @@ export type AutomatonBase = {
     id: AutomatonId
     name: string     
     createdAt: number
+    regex?: string
 }
 
 export type FiniteAutomaton = (DFA | NFA | LambdaNFA) & AutomatonBase
@@ -45,3 +46,11 @@ export type SimulationResult = {
     steps: SimulationStep[]
     error?: string
 }
+
+export type Regex = 
+    | { type: 'epsilon' }
+    | { type: 'empty' }
+    | { type: 'symbol', value: string }
+    | { type: 'star', child: Regex }
+    | { type: 'union', children: Regex[] }
+    | { type: 'concat', children: Regex[] };
