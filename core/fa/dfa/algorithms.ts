@@ -1,5 +1,5 @@
 import { DFA, FiniteAutomaton, State, StateId, Transition } from "../../../types"
-import { createState, createTransition, getTransitionsFromState, getTargetState } from "../edit"
+import { createState, createTransition, getTransitionsFromState, getTargetStateDFA } from "../edit"
 import { generateId } from "@/core/shared"
 
 export function makeDFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
@@ -149,7 +149,7 @@ function refineGroup(fa: FiniteAutomaton, currentGroup: StateId[], allGroups: St
     const LandauClusters: Record<number, StateId[]> = {};
 
     for (const stateId of currentGroup) {
-        const targetStateId = getTargetState(fa, stateId, symbol);
+        const targetStateId = getTargetStateDFA(fa, stateId, symbol);
         
         const targetGroupIdx = targetStateId ? getGroupIndex(allGroups, targetStateId) : -1;
 

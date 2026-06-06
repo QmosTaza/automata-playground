@@ -80,7 +80,7 @@ export function renameState( fa: FiniteAutomaton, stateId: StateId, newLabel: st
     }
 }
 
-function labelExists(fa: FiniteAutomaton, label: string): boolean {
+export function labelExists(fa: FiniteAutomaton, label: string): boolean {
     return Object.values(fa.states).some(
         s => s.label === label
     )
@@ -296,10 +296,31 @@ export function getTransitionsToState(fa: DFA | NFA | LambdaNFA, currentState: S
     )
 }
 
-export function getTargetState(fa: FiniteAutomaton, fromId: StateId, symbol: string): StateId | null {
+export function getTargetStateDFA(fa: FiniteAutomaton, fromId: StateId, symbol: string): StateId | null {
     const transition = fa.transitions.find(t => t.from === fromId && t.symbol === symbol);
     return transition ? transition.to : null;
 }
+
+export function getTargetStatesNFA(fa: FiniteAutomaton, fromId: StateId, symbol: string): Set<StateId> {
+    const targetStates = new Set<StateId>();
+    for (const t of fa.transitions) {
+        if (t.from === fromId && t.symbol === symbol) {
+            targetStates.add(t.to);
+        }
+    }
+    return targetStates
+}
+
+export function getTargetStatesNFALabels(fa: FiniteAutomaton, fromId: StateId, symbol: string): Set<string> {
+    const targetStates = new Set<StateId>();
+    for (const t of fa.transitions) {
+        if (t.from === fromId && t.symbol === symbol) {
+            targetStates.add(getStateLabelFromId(fa,t.to));
+        }
+    }
+    return targetStates
+}
+
 
 export function getDirectlyConnectedStates(fa: FiniteAutomaton, originId: StateId): Set<StateId> {
     const transitions = getTransitionsFromState(fa, originId)

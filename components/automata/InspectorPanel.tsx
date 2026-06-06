@@ -136,7 +136,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                     Machine Metadata
                                 </label>
                                 <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-1.5">
-                                    <div className="text-xs text-stone-500 flex justify-between">
+                                    <div className="text-xs text-stone-500 flex justify-between items-baseline">
                                         <span>Machine Type:</span>
                                         <span className="font-bold text-stone-700 uppercase">{automaton.kind ?? "Custom"}</span>
                                     </div>

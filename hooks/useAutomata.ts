@@ -9,6 +9,8 @@ import {
     removeTransition, removeState, renameState, toggleAcceptState, toggleStartState
 } from "@/core/fa/edit";
 import { validateDFA, validateCompleteness } from "@/core/fa/dfa/validate";
+import { validateNFA } from "@/core/fa/nfa/validate";
+import { validateLambdaNFA } from "@/core/fa/lambda-nfa/validate";
 
 export function useAutomata(initialFA: FiniteAutomaton) {
     const [fa, setFa] = useState<FiniteAutomaton>(initialFA);
@@ -107,10 +109,17 @@ export function useAutomata(initialFA: FiniteAutomaton) {
     }, []);
 
     const validationErrors = (() => {
-        if (fa.kind === "dfa") {
-            const dfaErrors = validateDFA(fa as DFA & AutomatonBase);
-            const compErrors = validateCompleteness(fa as DFA & AutomatonBase);
-            return [...dfaErrors.errors, ...compErrors];
+        switch (fa.kind) {
+            case "dfa":
+                const dfaErrors = validateDFA(fa as DFA & AutomatonBase);
+                const compErrors = validateCompleteness(fa as DFA & AutomatonBase);
+                return [...dfaErrors.errors, ...compErrors];
+            case "nfa":
+                const nfaErrors = validateNFA(fa as NFA & AutomatonBase);
+                return [...nfaErrors.errors];
+            case "lambda-nfa":
+                const lambdanfaErrors = validateLambdaNFA(fa as LambdaNFA & AutomatonBase);
+                return [...lambdanfaErrors.errors];
         }
         return [];
     })();
