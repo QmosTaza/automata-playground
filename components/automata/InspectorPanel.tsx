@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
 import { renameAutomaton, addSymbolToAlphabet, removeSymbolFromAlphabet, renameState, cleanSymbol, updateTransition, removeTransition, stateIsAccessible, stateIsUnreachable, stateIsSink } from "@/core/fa/edit";
-import { convertRegexToAutomaton } from "@/core/shared";
+import { convertRegexToAutomaton, validateRegexInput } from "@/core/fa/regex";
 
 interface InspectorPanelProps {
     automaton: FiniteAutomaton;
@@ -505,35 +505,58 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
                                     REGEX-TO-GRAPH COMPILER
                                 </label>
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        if (!regex.trim()) return;
-                                        handleCompileRegex(regex);
-                                    }}
-                                    className="flex gap-2"
-                                >
-                                    <input
-                                        type="text"
-                                        placeholder="Enter regex (e.g., (a+b)*a )"
-                                        value={regex}
-                                        onChange={(e) => setRegex(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            // Crucial: Stop typed keys ('a', 'b', etc.) from accidentally 
-                                            // triggering workspace shortcuts or moving canvas nodes
-                                            e.stopPropagation();
-                                        }}
-                                        className="flex-1 px-3 py-1 bg-stone-50 border border-stone-300 rounded-lg text-sm text-stone-800 outline-none focus:border-amber-600 transition-colors"
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="px-4 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs rounded-lg shadow-sm transition-all cursor-pointer active:scale-95 whitespace-nowrap mr-1"
-                                    >
-                                        Compile
-                                    </button>
-                                </form>
+                                {(() => {
+                                    const validation = validateRegexInput(regex, "workspace");
+                                    const hasText = regex.trim().length > 0;
+                                    const isInvalid = hasText && !validation.valid;
+                                    
+                                    return (
+                                        <>
+                                            <form
+                                                onSubmit={(e) => {
+                                                    e.preventDefault();
+                                                    if (!validation.valid) return;
+                                                    handleCompileRegex(regex);
+                                                }}
+                                                className="flex gap-2 animate-fadeIn"
+                                            >
+                                                <input
+                                                    type="text"
+                                                    placeholder="Enter regex (e.g., (a+b)*a )"
+                                                    value={regex}
+                                                    onChange={(e) => setRegex(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        e.stopPropagation();
+                                                    }}
+                                                    className={`flex-1 px-3 py-1 bg-stone-50 border rounded-lg text-sm text-stone-800 outline-none transition-colors ${isInvalid
+                                                            ? "border-red-500 focus:border-red-600 bg-red-50/10"
+                                                            : "border-stone-300 focus:border-amber-600"
+                                                        }`}
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    disabled={!validation.valid}
+                                                    className={`px-4 py-1.5 text-white font-semibold text-xs rounded-lg shadow-sm transition-all whitespace-nowrap mr-1 ${validation.valid
+                                                            ? "bg-amber-700 hover:bg-amber-800 cursor-pointer active:scale-95"
+                                                            : "bg-stone-300 text-stone-500 cursor-not-allowed select-none"
+                                                        }`}
+                                                >
+                                                    Compile
+                                                </button>
+                                            </form>
+                                            {isInvalid && (
+                                                <div className="text-[11px] font-medium text-red-600 bg-red-50/50 border border-red-200/60 px-2.5 py-1 rounded-md mt-1 animate-slideDown">
+                                                    Regular expression syntax error
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
+
                                 <p className="text-[10px] text-stone-500 leading-relaxed italic">
-                                    Compiling will transform this regex into a Lambda-NFA using Thompson's Construction. Do prepare yourself for a massive automaton :)
+                                    Compiling will transform this regex into a λ-NFA using Thompson's Construction. 
+                                    <br />
+                                    (Note: Use ε for empty transitions, not λ).
                                 </p>
                             </div>
 

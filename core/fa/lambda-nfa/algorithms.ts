@@ -172,7 +172,7 @@ export function convertLambdaNFAtoNFA(fa: FiniteAutomaton): FiniteAutomaton {
     return {
         id: fa.id,
         createdAt: fa.createdAt,
-        name: `${fa.name} (Clean NFA)`,
+        name: fa.name,
         alphabet: [...fa.alphabet],
         states: dynamicStates,
         transitions: finalTransitions,

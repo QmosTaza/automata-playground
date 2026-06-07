@@ -15,8 +15,9 @@ import { useAutomata } from "@/hooks/useAutomata";
 import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa";
 import { runDFA, makeDFAComplete, runNFA, runLambdaNFA } from "@/core/fa";
 import { DFA, NFA, LambdaNFA, SimulationStep, SimulationResult } from "@/types";
-import { generateId, convertAutomatonToRegex } from "@/core/shared";
+import { generateId } from "@/core/shared";
 import InspectorPanel from "./InspectorPanel";
+import { convertAutomatonToRegex } from "@/core/fa/regex";
 
 const nodeTypes = { state: StateNode };
 const edgeTypes = { transition: TransitionEdge };

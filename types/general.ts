@@ -32,6 +32,7 @@ export type ValidationError = {
     | { type: "NON_DETERMINISTIC_TRANSITION"; stateId: StateId; symbol: string }
     | { type: "MISSING_TRANSITION"; stateId: StateId; symbol: string }
     | { type: "ORPHAN_TRANSITION"; symbol: string }
+    | { type: "REGEX_SYNTAX_ERROR"; message: string; position?: number }
 )
 
 export type SimulationStep = {
