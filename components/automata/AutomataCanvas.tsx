@@ -171,7 +171,7 @@ function AutomataCanvasContent() {
             console.error("Automaton to Regex calculation failed:", error);
             return { ...fa, regex: "Error generating expression" };
         }
-    }, [fa.states, fa.transitions, fa.startStates, fa.acceptStates, canRunSimulation, isMounted]);
+    }, [fa, canRunSimulation, isMounted]);
 
     return (
         <div className="w-full h-screen bg-stone-100 relative">
@@ -230,7 +230,7 @@ function AutomataCanvasContent() {
                 />
             </ReactFlow>
 
-            <ValidationErrorPanel errors={validationErrors} a={fa} />
+            <ValidationErrorPanel errors={validationErrors} a={computedAutomaton} />
         </div>
     );
 }

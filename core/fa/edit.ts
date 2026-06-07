@@ -356,9 +356,18 @@ export function stateIsAccessible(fa:FiniteAutomaton, originId: StateId, destina
     return false;
 }
 
-export function stateIsUnreachable(fa:FiniteAutomaton, stateId: StateId) {
+export function stateIsUnreachable(fa:FiniteAutomaton, stateId: StateId) : boolean {
     for (const startState of fa.startStates) {
         if (stateIsAccessible(fa,startState,stateId)) {return false}
+    }
+    return true
+}
+
+
+export function stateIsSink(fa:FiniteAutomaton, stateId:StateId) : boolean {
+    if (isStateAccepting(fa, stateId) || stateIsUnreachable(fa, stateId)) { return false }
+    for (const startState of fa.startStates) {
+        if (stateIsAccessible(fa,stateId,startState)) {return false}
     }
     return true
 }

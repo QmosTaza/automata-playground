@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
-import { renameAutomaton, addSymbolToAlphabet, removeSymbolFromAlphabet, renameState, cleanSymbol, updateTransition, removeTransition, stateIsAccessible, stateIsUnreachable } from "@/core/fa/edit";
+import { renameAutomaton, addSymbolToAlphabet, removeSymbolFromAlphabet, renameState, cleanSymbol, updateTransition, removeTransition, stateIsAccessible, stateIsUnreachable, stateIsSink } from "@/core/fa/edit";
 
 interface InspectorPanelProps {
     automaton: FiniteAutomaton;
@@ -20,7 +20,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
     const hasStates = 'states' in automaton;
     const isLambdaNFA = 'kind' in automaton && automaton.kind === "lambda-nfa";
 
-    // HANDLERS EXISTENTES
+    // HANDLERS
     const handleRenameAutomaton = (newName: string) => {
         onAutomatonChange(renameAutomaton(automaton, newName));
     };
@@ -160,7 +160,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
                                     Formal 5-Tuple Definition
                                 </label>
-                                <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-2 text-xs font-mono text-stone-600 select-none">
+                                <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-2 text-xs font-mono text-stone-600 select-none nodrag select-text cursor-text">
                                     <div className="space-y-1.5">
                                         {/* Q */}
                                         <div className="flex items-baseline gap-1 overflow-x-auto whitespace-nowrap py-0.5 no-scrollbar">
@@ -230,13 +230,13 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                 <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-between text-xs font-mono text-stone-600 select-text gap-2 nodrag nowheel">
                                     <div className="flex items-baseline gap-1.5 overflow-x-auto whitespace-nowrap py-0.5 no-scrollbar w-full select-text">
                                         <span className="shrink-0 font-bold text-stone-500 select-none">R =</span>
-                                        {automaton.regex && automaton.regex !== "∅" ? (
+                                        {automaton.regex && automaton.regex !== "" ? (
                                             <span className="text-amber-800 font-semibold tracking-wide inline-block select-text cursor-text">
                                                 {automaton.regex}
                                             </span>
                                         ) : (
                                             <span className="italic text-stone-400 font-normal select-none">
-                                                ∅ (No expression linked)
+                                                — (No expression linked)
                                             </span>
                                         )}
                                     </div>
@@ -396,6 +396,9 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                                 )}
                                                 {stateIsUnreachable((automaton as any), state.id) && (
                                                     <span className="px-2 py-0.5 bg-red-50 border border-red-200 text-red-700 font-bold rounded-md">Unreachable</span>
+                                                )}
+                                                {stateIsSink((automaton as any), state.id) && (
+                                                    <span className="px-2 py-0.5 bg-stone-50 border border-stone-200 text-stone-700 font-bold rounded-md">Sink</span>
                                                 )}
                                             </div>
                                         </div>

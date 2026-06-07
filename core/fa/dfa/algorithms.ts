@@ -1,9 +1,15 @@
 import { DFA, FiniteAutomaton, State, StateId, Transition } from "../../../types"
-import { createState, createTransition, getTransitionsFromState, getTargetStateDFA, stateIsUnreachable } from "../edit"
+import { createState, createTransition, getTransitionsFromState, getTargetStateDFA, stateIsUnreachable, stateIsSink } from "../edit"
 import { generateId } from "@/core/shared"
 
 export function makeDFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
-    let sinkState: State | undefined
+    let sinkStateId: StateId | undefined = Object.keys(fa.states).find(id =>
+        stateIsSink(fa, id)
+    );
+
+    let createdNewSink = false;
+    let sinkStateObj: State | undefined = sinkStateId ? fa.states[sinkStateId] : undefined;
+
     const existing = new Set<string>()
     let newTransitions = [...fa.transitions]
     for (const t of fa.transitions) {
@@ -13,37 +19,41 @@ export function makeDFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
         for (const symbol of fa.alphabet) {
             const key = `${stateId}|${symbol}`
             if (!existing.has(key)) {
-                if (!sinkState) {
-                    sinkState = createState(fa, 0, 0)
+                if (!sinkStateId) {
+                    sinkStateObj = createState(fa, 0, 0);
+                    sinkStateId = sinkStateObj.id;
+                    createdNewSink = true;
                 }
-                newTransitions.push(createTransition(stateId, sinkState.id, symbol))
+                newTransitions.push(createTransition(stateId, sinkStateId, symbol))
             }
         }
     }
-    if (!sinkState) {
-        return fa
-    } else {
+    if (!sinkStateId || (!createdNewSink && newTransitions.length === fa.transitions.length)) {
+        return fa;
+    }
+
+    if (createdNewSink && sinkStateObj) {
         for (const symbol of fa.alphabet) {
-            newTransitions.push(createTransition(sinkState.id, sinkState.id, symbol))
+            newTransitions.push(createTransition(sinkStateId, sinkStateId, symbol));
         }
     }
 
     return {
         ...fa,
-        states: {
+        states: createdNewSink && sinkStateObj ? {
             ...fa.states,
-            [sinkState.id]: sinkState
-        },
+            [sinkStateId]: sinkStateObj
+        } : fa.states,
         transitions: newTransitions
-    }
+    };
 }
 
 export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
     const allStateIds = Object.keys(fa.states);
 
     let groups: StateId[][] = [
-        allStateIds.filter(id => fa.acceptStates.includes(id) && !stateIsUnreachable(fa,id)),
-        allStateIds.filter(id => !fa.acceptStates.includes(id) && !stateIsUnreachable(fa,id))
+        allStateIds.filter(id => fa.acceptStates.includes(id) && !stateIsUnreachable(fa, id)),
+        allStateIds.filter(id => !fa.acceptStates.includes(id) && !stateIsUnreachable(fa, id))
     ].filter(g => g.length > 0);
 
     let stable = false
@@ -58,11 +68,11 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
             // Try to split this group using every symbol in the alphabet
             for (const symbol of fa.alphabet) {
                 let temporarySplits: StateId[][] = [];
-                
+
                 for (const sub of subGroups) {
                     const refined = refineGroup(fa, sub, groups, symbol);
                     temporarySplits.push(...refined);
-                    
+
                     if (refined.length > 1) {
                         splitOccurred = true;
                     }
@@ -71,7 +81,7 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
             }
             newGroups.push(...subGroups);
         }
-        
+
         if (!splitOccurred) {
             stable = true;
         } else {
@@ -87,9 +97,9 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
 
     groups.forEach((group, index) => {
         const newId = generateId();
-        
+
         const combinedLabel = group.map(id => fa.states[id].label).join("_");
-        
+
         const avgX = group.reduce((sum, id) => sum + fa.states[id].x, 0) / group.length;
         const avgY = group.reduce((sum, id) => sum + fa.states[id].y, 0) / group.length;
 
@@ -115,7 +125,7 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
     const seenTransitions = new Set<string>();
 
     groups.forEach((group) => {
-        const representativeOldId = group[0]; 
+        const representativeOldId = group[0];
         const newFromId = oldToNewIdMap[representativeOldId];
 
         const oldTransitions = fa.transitions.filter(t => t.from === representativeOldId);
@@ -150,7 +160,7 @@ function refineGroup(fa: FiniteAutomaton, currentGroup: StateId[], allGroups: St
 
     for (const stateId of currentGroup) {
         const targetStateId = getTargetStateDFA(fa, stateId, symbol);
-        
+
         const targetGroupIdx = targetStateId ? getGroupIndex(allGroups, targetStateId) : -1;
 
         if (!LandauClusters[targetGroupIdx]) {
@@ -159,7 +169,7 @@ function refineGroup(fa: FiniteAutomaton, currentGroup: StateId[], allGroups: St
         LandauClusters[targetGroupIdx].push(stateId);
     }
 
-   return Object.values(LandauClusters);
+    return Object.values(LandauClusters);
 }
 
 function getGroupIndex(groups: string[][], stateId: string): number {
