@@ -145,10 +145,10 @@ function AutomataCanvasContent() {
         const prevStatesCount = Object.keys(fa.states).length;
         const nextStatesCount = Object.keys(nextFa.states).length;
 
-        if (nextStatesCount > prevStatesCount) {
+        if (nextStatesCount === prevStatesCount + 1) {
             const newId = Object.keys(nextFa.states).find(id => !fa.states[id]);
 
-            if (newId) {
+            if (newId && nextFa.states[newId]) {
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
                 const flowPosition = screenToFlowPosition({ x: centerX, y: centerY });
@@ -162,14 +162,14 @@ function AutomataCanvasContent() {
 
     const computedAutomaton = useMemo(() => {
         if (!isMounted || !canRunSimulation) {
-            return { ...fa, regex: "∅" };
+            return { ...fa, regex: "" };
         }
         try {
             const freshRegex = convertAutomatonToRegex(fa);
             return { ...fa, regex: freshRegex };
         } catch (error) {
             console.error("Automaton to Regex calculation failed:", error);
-            return { ...fa, regex: "Error generating expression" };
+            return { ...fa, regex: "" };
         }
     }, [fa, canRunSimulation, isMounted]);
 

@@ -1,7 +1,220 @@
-import { FiniteAutomaton, StateId, Transition, Regex } from "@/types"
+import { FiniteAutomaton, State, StateId, Transition, Regex, ThompsonGraph } from "@/types"
 import { generateId } from "./edit";
+import { applyNaiveLayout } from "../fa";
+import { convertLambdaNFAtoDFA, minimizeDFA, convertNFAtoDFA } from "../fa";
 
-//REGEX EXPRESSIONS
+
+// REGEX TO NFA
+export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
+    switch (ast.type) {
+        case "empty": {
+            const startId = generateId()
+            const acceptId = generateId()
+            return {
+                startId,
+                acceptId,
+                states: {
+                    [startId]: { id: startId, label: "q_in", x: 0, y: 0 },
+                    [acceptId]: { id: acceptId, label: "q_out", x: 0, y: 0 }
+                },
+                transitions: []
+            }}
+        case "epsilon": {
+            const startId = generateId()
+            const acceptId = generateId()
+            return {
+                startId,
+                acceptId: startId,
+                states: {
+                    [startId]: { id: startId, label: "q_ε", x: 0, y: 0 },
+                },
+                transitions: [
+                    {
+                        id: generateId(),
+                        from: startId,
+                        to: acceptId,
+                        symbol: null
+                    }
+                ]
+            }}
+        case "symbol":{
+            const startId = generateId();
+            const acceptId = generateId();
+
+            return {
+                startId,
+                acceptId,
+                states: {
+                    [startId]: { id: startId, label: `q_${ast.value}_in`, x: 0, y: 0 },
+                    [acceptId]: { id: acceptId, label: `q_${ast.value}_out`, x: 0, y: 0 }
+                },
+                transitions: [
+                    {
+                        id: generateId(),
+                        from: startId,
+                        to: acceptId,
+                        symbol: ast.value
+                    }
+                ]
+            };
+        }
+
+        case "concat": {
+            const children = ast.children;
+            if (children.length === 0) {
+                return compileRegexToLambdaNFA({ type: "epsilon" });
+            }
+
+            let combinedGraph = compileRegexToLambdaNFA(children[0]);
+
+            for (let i = 1; i < children.length; i++) {
+                const nextGraph = compileRegexToLambdaNFA(children[i]);
+                
+                const oldAcceptId = combinedGraph.acceptId;
+                const redundantStartId = nextGraph.startId;
+
+                const updatedNextTransitions = nextGraph.transitions.map(t => ({
+                    ...t,
+                    from: t.from === redundantStartId ? oldAcceptId : t.from,
+                    to: t.to === redundantStartId ? oldAcceptId : t.to
+                }));
+
+                const mergedStates = { ...combinedGraph.states, ...nextGraph.states };
+                delete mergedStates[redundantStartId];
+
+                combinedGraph = {
+                    startId: combinedGraph.startId,
+                    acceptId: nextGraph.acceptId === redundantStartId ? oldAcceptId : nextGraph.acceptId,
+                    states: mergedStates,
+                    transitions: [...combinedGraph.transitions, ...updatedNextTransitions]
+                };
+            }
+
+            return combinedGraph;
+        }
+        case "union": {
+            const children = ast.children;
+            if (children.length === 0) {
+                return compileRegexToLambdaNFA({ type: "empty" });
+            }
+
+            if (children.length === 1) {
+                return compileRegexToLambdaNFA(children[0]);
+            }
+
+            const wrapperStartId = generateId();
+            const wrapperAcceptId = generateId();
+
+            const combinedStates: Record<StateId, State> = {
+                [wrapperStartId]: { id: wrapperStartId, label: "q_union_src", x: 0, y: 0 },
+                [wrapperAcceptId]: { id: wrapperAcceptId, label: "q_union_dst", x: 0, y: 0 }
+            };
+            const combinedTransitions: Transition[] = [];
+
+            for (const child of children) {
+                const childGraph = compileRegexToLambdaNFA(child);
+
+                const startBridge: Transition = {
+                    id: generateId(),
+                    from: wrapperStartId,
+                    to: childGraph.startId,
+                    symbol: null
+                };
+
+                const acceptBridge: Transition = {
+                    id: generateId(),
+                    from: childGraph.acceptId,
+                    to: wrapperAcceptId,
+                    symbol: null
+                };
+
+                Object.assign(combinedStates, childGraph.states);
+                combinedTransitions.push(...childGraph.transitions, startBridge, acceptBridge);
+            }
+
+            return {
+                startId: wrapperStartId,
+                acceptId: wrapperAcceptId,
+                states: combinedStates,
+                transitions: combinedTransitions
+            };
+        }
+        case "star": {
+            const childGraph = compileRegexToLambdaNFA(ast.child);
+
+            const loopBackTrack: Transition = {
+                id: generateId(),
+                from: childGraph.acceptId,
+                to: childGraph.startId,
+                symbol: null
+            };
+
+            const bypassTrack: Transition = {
+                id: generateId(),
+                from: childGraph.startId,
+                to: childGraph.acceptId,
+                symbol: null
+            };
+
+            return {
+                startId: childGraph.startId,
+                acceptId: childGraph.acceptId,
+                states: childGraph.states,
+                transitions: [...childGraph.transitions, loopBackTrack, bypassTrack]
+            };
+        }
+    }
+}
+
+export function convertRegexToAutomaton(regexString: string): FiniteAutomaton {
+    const ast = parseRegex(regexString);
+    
+    const graph = compileRegexToLambdaNFA(ast);
+    
+    const automaton: FiniteAutomaton = {
+        id: generateId(),
+        name: `NFA from (${regexString})`,
+        createdAt: Date.now(),
+        states: graph.states,
+        transitions: graph.transitions,
+        startStates: [graph.startId],
+        acceptStates: [graph.acceptId],
+        kind: "lambda-nfa",
+        alphabet: extractAlphabetFromAST(ast)
+    }
+
+    return applyNaiveLayout(automaton);
+}
+
+export function extractAlphabetFromAST(ast: Regex): string[] {
+    const symbols = new Set<string>();
+
+    function walk(node: Regex) {
+        if (!node) return;
+        
+        switch (node.type) {
+            case "symbol":
+                if (node.value && node.value !== "ε" && node.value !== "∅") {
+                    symbols.add(node.value);
+                }
+                break;
+            case "star":
+                walk(node.child);
+                break;
+            case "concat":
+                node.children.forEach(walk);
+                break;
+            case "union":
+                node.children.forEach(walk);
+                break;
+        }
+    }
+
+    walk(ast);
+    return Array.from(symbols).sort();
+}
+
+//  FA TO REGEX
 export function calculateRij0(fa: FiniteAutomaton, stateI: StateId, stateJ: StateId): string {
     const transitions = fa.transitions.filter(
         t => t.from === stateI && t.to === stateJ
@@ -109,8 +322,26 @@ export function normalizeStartStatesForRegex(fa: FiniteAutomaton): {
 }
 
 export function convertAutomatonToRegex(fa: FiniteAutomaton): string {
-    const { normalizedFa, dummyStartId } = normalizeStartStatesForRegex(fa);
+    let optimizedFa = { ...fa };
 
+    try {
+        if (fa.kind === "lambda-nfa") {
+            const dfa = convertLambdaNFAtoDFA(fa);
+            optimizedFa = minimizeDFA(dfa);
+        } else if (fa.kind === "nfa") {
+            const dfa = convertNFAtoDFA(fa);
+            optimizedFa = minimizeDFA(dfa);
+        } else if (fa.kind === "dfa") {
+            optimizedFa = minimizeDFA(fa);
+        }
+    } catch (optimizationError) {
+        console.warn("Regex pre-optimization skipped, using raw graph:", optimizationError);
+        optimizedFa = fa;
+    }
+    
+    
+    const { normalizedFa, dummyStartId } = normalizeStartStatesForRegex(optimizedFa);
+    
     const stateIds = Object.keys(normalizedFa.states).sort();
     const n = stateIds.length;
 

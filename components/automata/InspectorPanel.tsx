@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
 import { renameAutomaton, addSymbolToAlphabet, removeSymbolFromAlphabet, renameState, cleanSymbol, updateTransition, removeTransition, stateIsAccessible, stateIsUnreachable, stateIsSink } from "@/core/fa/edit";
+import { convertRegexToAutomaton } from "@/core/shared";
 
 interface InspectorPanelProps {
     automaton: FiniteAutomaton;
@@ -13,7 +14,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
     const [isOpen, setIsOpen] = useState(true);
     const [activeSection, setActiveSection] = useState<"overview" | "editor" | "regex">("overview");
     const [newSymbol, setNewSymbol] = useState("");
-    //const [regex, setRegex] = useState("");
+    const [regex, setRegex] = useState("");
     const [bulkInputs, setBulkInputs] = useState("");
 
     const hasAlphabet = 'alphabet' in automaton;
@@ -48,7 +49,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
 
     // WIP
     const handleCompileRegex = (expression: string) => {
-        console.log("WIP: Running Thompson's Construction on:", expression);
+        onAutomatonChange(convertRegexToAutomaton(expression))
     };
 
     const handleBulkInputs = (bulkInputs: string) => {
@@ -502,28 +503,37 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                             {/* REGEX */}
                             <div className="space-y-2.5">
                                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
-                                    REGEX-TO-GRAPH COMPILER (Coming soon...)
+                                    REGEX-TO-GRAPH COMPILER
                                 </label>
-                                <div className="flex gap-2">
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        if (!regex.trim()) return;
+                                        handleCompileRegex(regex);
+                                    }}
+                                    className="flex gap-2"
+                                >
                                     <input
                                         type="text"
-                                        placeholder="Add regex (e.g., (a|b)*abb )"
-                                        value={automaton.regex || ""}
-                                        onChange={(e) => onAutomatonChange({
-                                            ...automaton,
-                                            regex: e.target.value
-                                        })}
+                                        placeholder="Enter regex (e.g., (a+b)*a )"
+                                        value={regex}
+                                        onChange={(e) => setRegex(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            // Crucial: Stop typed keys ('a', 'b', etc.) from accidentally 
+                                            // triggering workspace shortcuts or moving canvas nodes
+                                            e.stopPropagation();
+                                        }}
                                         className="flex-1 px-3 py-1 bg-stone-50 border border-stone-300 rounded-lg text-sm text-stone-800 outline-none focus:border-amber-600 transition-colors"
                                     />
                                     <button
-                                        onClick={() => handleCompileRegex(automaton.regex || "")}
+                                        type="submit"
                                         className="px-4 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs rounded-lg shadow-sm transition-all cursor-pointer active:scale-95 whitespace-nowrap mr-1"
                                     >
                                         Compile
                                     </button>
-                                </div>
+                                </form>
                                 <p className="text-[10px] text-stone-500 leading-relaxed italic">
-                                    Compiling will transform this regex into a {isLambdaNFA ? "Lambda-NFA" : "NFA"} using Thompson's Construction.
+                                    Compiling will transform this regex into a Lambda-NFA using Thompson's Construction. Do prepare yourself for a massive automaton :)
                                 </p>
                             </div>
 

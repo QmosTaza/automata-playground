@@ -284,6 +284,8 @@ export function renameAutomaton<T extends FiniteAutomaton>(fa: T, newName: strin
     }
 }
 
+// CONNECTION RELATED FUNCTIONS
+
 export function getTransitionsFromState(fa: DFA | NFA | LambdaNFA, currentState: StateId): Transition[] {
     return fa.transitions.filter(
         t => t.from === currentState
@@ -370,4 +372,71 @@ export function stateIsSink(fa:FiniteAutomaton, stateId:StateId) : boolean {
         if (stateIsAccessible(fa,stateId,startState)) {return false}
     }
     return true
+}
+
+
+// LAYOUT - RENAMING FUNCTION
+
+export function applyNaiveLayout(automaton: FiniteAutomaton): FiniteAutomaton {
+    const states = { ...automaton.states };
+    const visited = new Set<string>();
+    
+    const statePositions = new Map<string, { x: number; y: number }>();
+    let globalIndex = 0;
+    
+    const labelMapping = new Map<string, string>();
+
+    function layoutState(stateId: string, currentX: number, currentY: number) {
+        if (visited.has(stateId)) {
+            const existing = statePositions.get(stateId)!;
+            if (currentX > existing.x) {
+                existing.x = Math.max(existing.x, currentX);
+            }
+            return;
+        }
+
+        visited.add(stateId);
+        statePositions.set(stateId, { x: currentX, y: currentY });
+        
+        labelMapping.set(stateId, `q${globalIndex++}`);
+
+        const outgoing = automaton.transitions.filter(t => t.from === stateId);
+        
+        outgoing.forEach((t, index) => {
+            const xOffset = 180; 
+            
+            let yOffset = 0;
+            if (outgoing.length > 1) {
+                yOffset = (index - (outgoing.length - 1) / 2) * 120;
+            }
+
+            layoutState(t.to, currentX + xOffset, currentY + yOffset);
+        });
+    }
+
+    if (automaton.startStates.length > 0) {
+        layoutState(automaton.startStates[0], 100, 200);
+    }
+
+    for (const stateId in states) {
+        if (!visited.has(stateId)) {
+            statePositions.set(stateId, { x: 100, y: 400 });
+            labelMapping.set(stateId, `q${globalIndex++}`);
+        }
+    }
+
+    for (const stateId in states) {
+        const coords = statePositions.get(stateId) || { x: 0, y: 0 };
+        states[stateId] = {
+            ...states[stateId],
+            label: labelMapping.get(stateId) || states[stateId].label,
+            x: coords.x,
+            y: coords.y
+        };
+    }
+
+    return {
+        ...automaton,
+        states
+    };
 }

@@ -84,8 +84,9 @@ export function useAutomata(initialFA: FiniteAutomaton) {
             });
         });
         setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
-    }, [fa, onToggleAccept, onRename, onToggleStart, handleUpdateSymbols, handleRemoveEdge, activeStateId]);
-
+        
+    }, [fa, activeStateId]);
+    
     const onNodesChange = useCallback((changes: any) => {
         setNodes((nds) => applyNodeChanges(changes, nds));
     }, []);

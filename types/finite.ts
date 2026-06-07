@@ -35,3 +35,10 @@ export type LambdaNFA = FiniteAutomatonBase & {
     kind: "lambda-nfa"
 }
 
+export interface ThompsonGraph {
+    startId: StateId;
+    acceptId: StateId;
+    states: Record<StateId, State>;
+    transitions: Transition[];
+}
+

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
-import { makeDFAComplete, minimizeDFA, convertNFAtoDFA, convertLambdaNFAtoDFA, convertLambdaNFAtoNFA } from "@/core/fa";
+import { makeDFAComplete, minimizeDFA, convertNFAtoDFA, convertLambdaNFAtoDFA, convertLambdaNFAtoNFA, applyNaiveLayout } from "@/core/fa";
 
 interface SimulationControlsProps {
     fa: FiniteAutomaton;
@@ -37,17 +37,23 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
 
     const handleConvertNFAtoDFA = () => {
         const convertedDFA = convertNFAtoDFA(fa);
-        onAutomataChange(convertedDFA);
+        convertedDFA.kind = "dfa";
+        onKindChange("dfa");
+        onAutomataChange(applyNaiveLayout(convertedDFA));
     };
 
     const handleConvertLambdaNFAtoDFA = () => {
         const convertedDFA = convertLambdaNFAtoDFA(fa);
-        onAutomataChange(convertedDFA);
+        convertedDFA.kind = "dfa";
+        onKindChange("dfa");
+        onAutomataChange(applyNaiveLayout(convertedDFA));
     };
 
     const handleConvertLambdaNFAtoNFA = () => {
-        const convertedDFA = convertLambdaNFAtoNFA(fa);
-        onAutomataChange(convertedDFA);
+        const convertedNFA = convertLambdaNFAtoNFA(fa);
+        convertedNFA.kind = "nfa";
+        onKindChange("nfa");
+        onAutomataChange(applyNaiveLayout(convertedNFA));
     };
 
     return (
