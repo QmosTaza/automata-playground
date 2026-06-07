@@ -27,7 +27,8 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
                 startId,
                 acceptId: startId,
                 states: {
-                    [startId]: { id: startId, label: "q_ε", x: 0, y: 0 },
+                    [startId]: { id: startId, label: "q_λ", x: 0, y: 0 },
+                    [acceptId]: { id: acceptId, label: "q_λ_out", x: 0, y: 0 }
                 },
                 transitions: [
                     {
@@ -196,7 +197,7 @@ export function extractAlphabetFromAST(ast: Regex): string[] {
 
         switch (node.type) {
             case "symbol":
-                if (node.value && node.value !== "ε" && node.value !== "∅") {
+                if (node.value && node.value !== "λ" && node.value !== "∅") {
                     symbols.add(node.value);
                 }
                 break;

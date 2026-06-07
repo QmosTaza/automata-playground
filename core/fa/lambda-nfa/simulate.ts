@@ -110,7 +110,7 @@ export function getLambdaClosure(automaton: LambdaNFA, startStateId: string): Se
             t.symbol === undefined || 
             t.symbol === "" || 
             t.symbol === "λ" || 
-            t.symbol === "ε" ||
+            t.symbol === "λ" ||
             String(t.symbol).toLowerCase() === "lambda" ||
             String(t.symbol).toLowerCase() === "epsilon";
 

@@ -10,14 +10,14 @@ export function calculateRij0(fa: FiniteAutomaton, stateI: StateId, stateJ: Stat
         t => t.from === stateI && t.to === stateJ
     );
 
-    let result: string = stateI === stateJ ? "ε" : "";
+    let result: string = stateI === stateJ ? "λ" : "";
 
     for (const t of transitions) {
-        const symbolLabel = (t.symbol === "" || t.symbol === null || t.symbol === undefined) ? "ε" : t.symbol.trim();
-        if (result !== "" && result !== "ε") {
+        const symbolLabel = (t.symbol === "" || t.symbol === null || t.symbol === undefined) ? "λ" : t.symbol.trim();
+        if (result !== "" && result !== "λ") {
             result += " + " + symbolLabel;
-        } else if (result === "ε") {
-            result = `ε + ${symbolLabel}`;
+        } else if (result === "λ") {
+            result = `λ + ${symbolLabel}`;
         } else {
             result += symbolLabel;
         }
@@ -53,8 +53,8 @@ export function calculateRijk(
         return r_ij;
     }
 
-    let starBlock = r_kk === "ε" ? "" : `(${r_kk})*`;
-    if (r_kk.length === 1 && r_kk !== "ε") starBlock = `${r_kk}*`; // Simplify clean chars like a*
+    let starBlock = r_kk === "λ" ? "" : `(${r_kk})*`;
+    if (r_kk.length === 1 && r_kk !== "λ") starBlock = `${r_kk}*`; // Simplify clean chars like a*
 
     const pathThroughK = `${formatTerm(r_ik)}${starBlock}${formatTerm(r_kj)}`;
 
@@ -71,7 +71,7 @@ function formatTerm(term: string): string {
     if (term.includes("+") && !term.startsWith("(")) {
         return `(${term})`;
     }
-    return term === "ε" ? "" : term;
+    return term === "λ" ? "" : term;
 }
 
 export function normalizeStartStatesForRegex(fa: FiniteAutomaton): {
@@ -184,7 +184,7 @@ export function simplifyRegexStr(regexStr: string): string {
     let cleanStr = regexStr.replace(/\s+/g, "");
     if (!cleanStr || cleanStr === "∅") return "∅";
 
-    if (cleanStr === "ε" || cleanStr === "λ") return "ε";
+    if (cleanStr === "λ" || cleanStr === "λ") return "λ";
 
     try {
         const ast = parseRegex(cleanStr);
@@ -483,7 +483,7 @@ function keyRegex(r: Regex): string {
             return "∅";
 
         case "epsilon":
-            return "ε";
+            return "λ";
 
         case "symbol":
             return `s:${r.value}`;
@@ -505,7 +505,7 @@ function printRegex(r: Regex): string {
             return "∅";
 
         case "epsilon":
-            return "ε";
+            return "λ";
 
         case "symbol":
             return r.value;
@@ -650,7 +650,7 @@ export function parseRegex(input: string): Regex {
             return expr;
         }
 
-        if (ch === "ε") {
+        if (ch === "λ") {
             consume();
             return { type: "epsilon" };
         }

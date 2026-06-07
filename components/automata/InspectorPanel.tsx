@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
 import { renameAutomaton, addSymbolToAlphabet, removeSymbolFromAlphabet, renameState, cleanSymbol, updateTransition, removeTransition, stateIsAccessible, stateIsUnreachable, stateIsSink } from "@/core/fa/edit";
 import { convertRegexToAutomaton, validateRegexInput } from "@/core/fa/regex";
+import { generateShortlexWords, evaluateString } from "@/core/shared";
 
 interface InspectorPanelProps {
     automaton: FiniteAutomaton;
@@ -509,7 +510,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                     const validation = validateRegexInput(regex, "workspace");
                                     const hasText = regex.trim().length > 0;
                                     const isInvalid = hasText && !validation.valid;
-                                    
+
                                     return (
                                         <>
                                             <form
@@ -529,16 +530,16 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                                         e.stopPropagation();
                                                     }}
                                                     className={`flex-1 px-3 py-1 bg-stone-50 border rounded-lg text-sm text-stone-800 outline-none transition-colors ${isInvalid
-                                                            ? "border-red-500 focus:border-red-600 bg-red-50/10"
-                                                            : "border-stone-300 focus:border-amber-600"
+                                                        ? "border-red-500 focus:border-red-600 bg-red-50/10"
+                                                        : "border-stone-300 focus:border-amber-600"
                                                         }`}
                                                 />
                                                 <button
                                                     type="submit"
                                                     disabled={!validation.valid}
                                                     className={`px-4 py-1.5 text-white font-semibold text-xs rounded-lg shadow-sm transition-all whitespace-nowrap mr-1 ${validation.valid
-                                                            ? "bg-amber-700 hover:bg-amber-800 cursor-pointer active:scale-95"
-                                                            : "bg-stone-300 text-stone-500 cursor-not-allowed select-none"
+                                                        ? "bg-amber-700 hover:bg-amber-800 cursor-pointer active:scale-95"
+                                                        : "bg-stone-300 text-stone-500 cursor-not-allowed select-none"
                                                         }`}
                                                 >
                                                     Compile
@@ -554,55 +555,140 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                 })()}
 
                                 <p className="text-[10px] text-stone-500 leading-relaxed italic">
-                                    Compiling will transform this regex into a λ-NFA using Thompson's Construction. 
-                                    <br />
-                                    (Note: Use ε for empty transitions, not λ).
+                                    Compiling will transform this regex into a λ-NFA using Thompson's Construction.
                                 </p>
                             </div>
 
-                            {/* MATH EXPRESSION */}
-                            <div className="space-y-2 border-t border-stone-200/60 pt-4">
+                            {/* EVALUATED GRAPH EXPRESSION */}
+                            <div className="space-y-1 border-t border-stone-200/60 pt-4">
                                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
                                     Evaluated Graph Expression
                                 </label>
-
-                                <div className="flex items-center space-y-2.5 gap-3 p-2.5 bg-stone-50 border border-stone-200 rounded-xl">
-                                    <div className="w-full bg-white px-3 py-1.5 border border-stone-200 rounded-lg shadow-sm text-xs font-medium text-stone-400 italic flex items-center min-h-[34px]">
-                                        Coming soon...
-                                    </div>
-                                </div>
+                                {(() => {
+                                    const regexStr = automaton.regex;
+                                    return (
+                                        <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-between text-xs font-mono text-stone-600 select-text gap-2 nodrag nowheel">
+                                            <div className="flex items-baseline gap-1 overflow-x-auto whitespace-nowrap py-0.5 no-scrollbar w-full select-text">
+                                                <span className="shrink-0 font-bold text-stone-500 select-none">L(M) = &#123; ℒ⦗ </span>
+                                                <span className="text-amber-800 font-semibold tracking-wide inline-block select-text cursor-text">
+                                                    {regexStr === "冲" || !regexStr ? "∅" : regexStr}
+                                                </span>
+                                                <span className="text-stone-500 font-medium select-none ml-1">⦘ ⊆ &Sigma;*</span>
+                                                <span className="select-none">&#125;</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
-                            {/* BATCH ENGINE*/}
+                            {/* SHORTLEX SHOWCASE */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
+                                    Shortlex Enumeration (First 10 Words)
+                                </label>
+                                {(() => {
+                                    const firstTenWords = generateShortlexWords(automaton, 10);
+                                    return (
+                                        <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-between text-xs font-mono text-stone-600 select-text gap-2 nodrag nowheel">
+                                            <div className="flex items-baseline gap-1 overflow-x-auto whitespace-nowrap py-0.5 no-scrollbar w-full select-text">
+                                                {firstTenWords.length === 0 ? (
+                                                    <span className="italic text-stone-400 font-normal select-none">
+                                                        &empty; (Empty Language - No valid paths found)
+                                                    </span>
+                                                ) : (
+                                                    <div className="flex items-baseline gap-1.5 select-text">
+                                                        {firstTenWords.map((word, idx, arr) => (
+                                                            <span key={idx} className="inline-block text-stone-600 font-medium select-text cursor-text">
+                                                                {word === "λ" ? (
+                                                                    <span className="text-stone-400 italic font-normal">λ</span>
+                                                                ) : (
+                                                                    <span className="text-stone-700 font-normal">{word}</span>
+                                                                )}
+                                                                {idx < arr.length - 1 && (
+                                                                    <span className="text-stone-400 font-normal ml-1 select-none">,</span>
+                                                                )}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+
+                            {/* BATCH TESTING SUITE */}
                             <div className="space-y-2 border-t border-stone-200/60 pt-4">
                                 <div className="flex justify-between items-center px-1">
                                     <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none">
                                         Batch Testing Suite
                                     </label>
-                                    <span className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md tracking-wide uppercase select-none">
-                                        Coming soon...
-                                    </span>
+
+                                    {bulkInputs.trim().length > 0 && (() => {
+                                        const lines = bulkInputs.split("\n").filter(line => line.trim() !== "");
+                                        const total = lines.length;
+                                        const passed = lines.filter(str => evaluateString(automaton, str)).length;
+                                        return (
+                                            <span className={`text-[9px] font-bold border px-2 py-0.5 rounded-md tracking-wide uppercase select-none ${passed === total
+                                                    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                                                    : "text-amber-800 bg-amber-50 border-amber-200"
+                                                }`}>
+                                                {passed} / {total} PASSED
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
 
-                                <div
-                                    className="gap-3 p-2.5 bg-stone-50 border border-stone-200 rounded-xl">
+                                <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-3 nodrag nowheel">
+                                    {/* Text Area Input */}
                                     <textarea
                                         rows={4}
                                         value={bulkInputs}
                                         onChange={(e) => setBulkInputs(e.target.value)}
-                                        placeholder="Type multiple verification targets...&#10;(One test case per line)"
+                                        onKeyDown={(e) => {
+                                            e.stopPropagation();
+                                        }}
+                                        placeholder="Type multiple verification targets...&#10;(One test case per line, use λ for empty string)"
                                         className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-mono text-stone-800 outline-none focus:border-amber-600 transition-colors resize-none shadow-sm placeholder:font-sans placeholder:text-stone-400"
                                     />
-                                    <p className="text-[10px] italic text-stone-400 font-medium leading-normal px-0.5 py-2">
-                                        Evaluates all target test strings instantly
-                                    </p>
+
+                                    {/* Live Status Readout */}
+                                    {bulkInputs.trim().length > 0 ? (
+                                        <div className="space-y-1.5 border-t border-stone-200/60 pt-2.5">
+                                            <div className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block select-none">
+                                                Real-time Evaluation Results
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto no-scrollbar py-0.5 select-text cursor-text">
+                                                {bulkInputs.split("\n").map((rawLine, index) => {
+                                                    if (rawLine === "" && index === bulkInputs.split("\n").length - 1) return null;
+
+                                                    const cleanStr = (rawLine === "λ" || rawLine === "") ? "" : rawLine;
+                                                    const isAccepted = evaluateString(automaton, cleanStr);
+
+                                                    return (
+                                                        <span
+                                                            key={index}
+                                                            className={`inline-block text-xs font-mono font-medium rounded-md px-2 py-0.5 border shadow-sm transition-colors select-text ${isAccepted
+                                                                    ? "bg-emerald-50 text-emerald-800 border-emerald-200/60"
+                                                                    : "bg-rose-50 text-rose-800 border-rose-200/60"
+                                                                }`}
+                                                        >
+                                                            <span className="font-bold mr-1 select-none">
+                                                                {isAccepted ? "✓" : "✗"}
+                                                            </span>
+                                                            {rawLine === "" ? <span className="text-stone-400 italic font-normal">λ</span> : rawLine}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-[10px] italic text-stone-400 font-medium leading-normal px-0.5">
+                                            Evaluates all target test strings instantly as you type.
+                                        </p>
+                                    )}
                                 </div>
-                                <button
-                                    onClick={() => handleBulkInputs("(a|b)*abb")}
-                                    className="px-4 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs rounded-lg shadow-sm transition-all cursor-pointer active:scale-95 whitespace-nowrap mr-1"
-                                >
-                                    Run
-                                </button>
                             </div>
 
                         </div>

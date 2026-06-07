@@ -65,7 +65,6 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
         for (const group of groups) {
             let subGroups = [group];
 
-            // Try to split this group using every symbol in the alphabet
             for (const symbol of fa.alphabet) {
                 let temporarySplits: StateId[][] = [];
 
