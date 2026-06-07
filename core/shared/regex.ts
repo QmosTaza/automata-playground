@@ -247,7 +247,6 @@ export function simplifyRegex(r: Regex): Regex {
             let unique = deduplicate(flat).filter(t => t.type !== "empty");
             if (unique.length === 0) return { type: "empty" };
 
-            
             const complexPaths = unique.filter(c => c.type === "concat" || c.type === "star");
             const looseSymbols = unique.filter(c => c.type === "symbol");
 
@@ -299,9 +298,8 @@ export function simplifyRegex(r: Regex): Regex {
                         const starBaseStr = printRegex(lastChild.child);
                         
                         if (node.type === "symbol" || node.type === "union") {
-                            const prefixStr = prefix.map(printRegex).join("");
                             if (isSubSetOfConcatPrefix(node, prefix, starBaseStr)) {
-                                return false;
+                                return false; 
                             }
                         }
                     }
@@ -347,6 +345,10 @@ function isSubSetOfStar(node: Regex, starBaseStr: string): boolean {
 }
 
 function isSubSetOfConcatPrefix(node: Regex, prefixNodes: Regex[], starBaseStr: string): boolean {
+    if (node.type === "union") {
+        return node.children.every(child => isSubSetOfConcatPrefix(child, prefixNodes, starBaseStr));
+    }
+
     const nodeStr = printRegex(node);
     
     if (prefixNodes.length === 1 && prefixNodes[0].type === "union") {
