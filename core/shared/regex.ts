@@ -1,6 +1,6 @@
 import { FiniteAutomaton, State, StateId, Transition, Regex, ThompsonGraph } from "@/types"
 import { generateId } from "./edit";
-import { applyNaiveLayout } from "../fa";
+import { applyNaiveLayout, stateIsSink, stateIsUnreachable } from "../fa";
 import { convertLambdaNFAtoDFA, minimizeDFA, convertNFAtoDFA } from "../fa";
 
 
@@ -18,7 +18,8 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
                     [acceptId]: { id: acceptId, label: "q_out", x: 0, y: 0 }
                 },
                 transitions: []
-            }}
+            }
+        }
         case "epsilon": {
             const startId = generateId()
             const acceptId = generateId()
@@ -36,8 +37,9 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
                         symbol: null
                     }
                 ]
-            }}
-        case "symbol":{
+            }
+        }
+        case "symbol": {
             const startId = generateId();
             const acceptId = generateId();
 
@@ -69,7 +71,7 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
 
             for (let i = 1; i < children.length; i++) {
                 const nextGraph = compileRegexToLambdaNFA(children[i]);
-                
+
                 const oldAcceptId = combinedGraph.acceptId;
                 const redundantStartId = nextGraph.startId;
 
@@ -168,9 +170,9 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
 
 export function convertRegexToAutomaton(regexString: string): FiniteAutomaton {
     const ast = parseRegex(regexString);
-    
+
     const graph = compileRegexToLambdaNFA(ast);
-    
+
     const automaton: FiniteAutomaton = {
         id: generateId(),
         name: `NFA from (${regexString})`,
@@ -191,7 +193,7 @@ export function extractAlphabetFromAST(ast: Regex): string[] {
 
     function walk(node: Regex) {
         if (!node) return;
-        
+
         switch (node.type) {
             case "symbol":
                 if (node.value && node.value !== "ε" && node.value !== "∅") {
@@ -338,11 +340,37 @@ export function convertAutomatonToRegex(fa: FiniteAutomaton): string {
         console.warn("Regex pre-optimization skipped, using raw graph:", optimizationError);
         optimizedFa = fa;
     }
+
+    const filteredStates: Record<string, any> = {};
     
-    
-    const { normalizedFa, dummyStartId } = normalizeStartStatesForRegex(optimizedFa);
-    
-    const stateIds = Object.keys(normalizedFa.states).sort();
+    for (const id in optimizedFa.states) {
+        const isDeadSink = stateIsSink(optimizedFa, id);
+        const isOrphan = stateIsUnreachable(optimizedFa, id);
+
+        if ((!isDeadSink && !isOrphan) || optimizedFa.startStates.includes(id)) {
+            filteredStates[id] = optimizedFa.states[id];
+        }
+    }
+
+    const survivingIds = new Set(Object.keys(filteredStates));
+    const filteredTransitions = optimizedFa.transitions.filter(
+        t => survivingIds.has(t.from) && survivingIds.has(t.to)
+    );
+
+    const regexFa: FiniteAutomaton = {
+        ...optimizedFa,
+        states: filteredStates,
+        transitions: filteredTransitions
+    };
+
+
+    const { normalizedFa, dummyStartId } = normalizeStartStatesForRegex(regexFa);
+
+    const internalStateIds = Object.keys(normalizedFa.states)
+        .filter(id => id !== dummyStartId)
+        .sort();
+        
+    const stateIds = [...internalStateIds, dummyStartId];
     const n = stateIds.length;
 
     const finalExpressions: string[] = [];
@@ -350,6 +378,7 @@ export function convertAutomatonToRegex(fa: FiniteAutomaton): string {
     const memo = new Map<string, string>();
 
     for (const acceptId of normalizedFa.acceptStates) {
+        if (!normalizedFa.states[acceptId]) continue;
         const pathRegex = calculateRijk(normalizedFa, dummyStartId, acceptId, n, stateIds, memo);
 
         if (pathRegex && pathRegex !== "∅") {
@@ -403,8 +432,16 @@ export function simplifyRegex(r: Regex): Regex {
                 if (withoutEpsilon.length === 1) {
                     e = withoutEpsilon[0];
                 } else if (withoutEpsilon.length > 1) {
-                    e = { type: "union", children: withoutEpsilon };
+                    e = simplifyRegex({ type: "union", children: withoutEpsilon });
                 }
+            }
+
+            if (e.type === "concat" && e.children.every(c => c.type === "star")) {
+                const unionChildren = e.children.map(c => (c as any).child);
+                return simplifyRegex({
+                    type: "star",
+                    child: { type: "union", children: unionChildren }
+                });
             }
 
             return { type: "star", child: e };
@@ -419,10 +456,11 @@ export function simplifyRegex(r: Regex): Regex {
                 else flat.push(t);
             }
 
-            const filtered = flat.filter(t => t.type !== "epsilon");
-
-            if (filtered.some(t => t.type === "empty"))
+            if (flat.some(t => t.type === "empty")) {
                 return { type: "empty" };
+            }
+
+            const filtered = flat.filter(t => t.type !== "epsilon");
 
             if (filtered.length === 0)
                 return { type: "epsilon" };
@@ -437,7 +475,7 @@ export function simplifyRegex(r: Regex): Regex {
                 changed = false;
                 for (let i = 0; i < optimized.length; i++) {
                     const current = optimized[i];
-                    
+
                     if (current.type === "star") {
                         const starBaseStr = printRegex(current.child);
 
@@ -462,6 +500,16 @@ export function simplifyRegex(r: Regex): Regex {
                 }
             }
 
+            if (optimized.length === 2 && optimized[0].type === "star" && optimized[0].child.type === "union") {
+                const unionNode = optimized[0].child;
+                if (isSubSetOfStar(optimized[1], printRegex(unionNode))) {
+                    return simplifyRegex({
+                        type: "concat",
+                        children: [optimized[1], optimized[0]]
+                    });
+                }
+            }
+
             return optimized.length === 1 ? optimized[0] : { type: "concat", children: optimized };
         }
 
@@ -475,8 +523,34 @@ export function simplifyRegex(r: Regex): Regex {
                     flat.push(t);
             }
 
-            let unique = deduplicate(flat).filter(t => t.type !== "empty");
-            if (unique.length === 0) return { type: "empty" };
+            let unique = deduplicate(flat).filter(t => (t.type as string) !== "empty");
+            if (unique.length === 0) return { type: "empty" } as Regex; 
+            if (unique.length === 1) return unique[0];
+
+            const cleanUnique: Regex[] = [];
+            const seenStr = new Set<string>();
+
+            for (const item of unique) {
+                const itemStr = printRegex(item);
+                if ((item.type as string) !== "empty" && !seenStr.has(itemStr)) {
+                    seenStr.add(itemStr);
+                    cleanUnique.push(item);
+                }
+            }
+            unique = cleanUnique;
+
+            if (unique.length === 1) return unique[0];
+
+            const stars = unique.filter(c => c.type === "star") as Extract<Regex, { type: "star" }>[];
+            if (stars.length > 0) {
+                unique = unique.filter(node => {
+                    if (node.type === "star") return true;
+                    for (const s of stars) {
+                        if (printRegex(s.child) === printRegex(node)) return false;
+                    }
+                    return true;
+                });
+            }
 
             const complexPaths = unique.filter(c => c.type === "concat" || c.type === "star");
             const looseSymbols = unique.filter(c => c.type === "symbol");
@@ -506,36 +580,54 @@ export function simplifyRegex(r: Regex): Regex {
             }
 
             const targetStars = unique.filter(c => c.type === "star") as Extract<Regex, { type: "star" }>[];
-            
+
             const concatWithTrailingStars = unique.filter(c => {
                 if (c.type !== "concat") return false;
                 const children = (c as any).children || [];
                 return children.length > 0 && children[children.length - 1].type === "star";
             });
-            
+
             if (targetStars.length > 0 || concatWithTrailingStars.length > 0) {
                 unique = unique.filter(node => {
-                    if (node.type === "star") return true; 
-                    
+                    if (node.type === "star") return true;
+
                     for (const starNode of targetStars) {
                         const starBaseStr = printRegex(starNode.child);
                         if (isSubSetOfStar(node, starBaseStr)) return false;
                     }
-                    
+
                     for (const concatNode of concatWithTrailingStars) {
                         const children = (concatNode as any).children;
                         const prefix = children.slice(0, -1);
                         const lastChild = children[children.length - 1];
                         const starBaseStr = printRegex(lastChild.child);
-                        
+
                         if (node.type === "symbol" || node.type === "union") {
                             if (isSubSetOfConcatPrefix(node, prefix, starBaseStr)) {
-                                return false; 
+                                return false;
                             }
                         }
                     }
                     return true;
                 });
+            }
+
+            if (unique.length > 1 && unique.every(c => c.type === "concat")) {
+                const firstTermPrefix = printRegex((unique[0] as any).children[0]);
+                const matchesPrefix = unique.every(c => printRegex((c as any).children[0]) === firstTermPrefix);
+
+                if (matchesPrefix) {
+                    const prefixNode = (unique[0] as any).children[0];
+                    const remainingTerms = unique.map(c => ({
+                        type: "concat" as const,
+                        children: (c as any).children.slice(1)
+                    }));
+
+                    return simplifyRegex({
+                        type: "concat",
+                        children: [prefixNode, { type: "union", children: remainingTerms }]
+                    });
+                }
             }
 
             const uniqueMap = new Map<string, Regex>();
@@ -559,7 +651,7 @@ export function simplifyRegex(r: Regex): Regex {
 
 function isSubSetOfStar(node: Regex, starBaseStr: string): boolean {
     if (node.type === "epsilon") return true;
-    
+
     const nodeStr = printRegex(node);
     if (nodeStr === starBaseStr) return true;
 
@@ -581,14 +673,14 @@ function isSubSetOfConcatPrefix(node: Regex, prefixNodes: Regex[], starBaseStr: 
     }
 
     const nodeStr = printRegex(node);
-    
+
     if (prefixNodes.length === 1 && prefixNodes[0].type === "union") {
         return prefixNodes[0].children.some(child => {
             const childStr = printRegex(child);
             return childStr === nodeStr || childStr === starBaseStr;
         });
     }
-    
+
     const combinedPrefix = prefixNodes.map(printRegex).join("");
     return nodeStr === combinedPrefix;
 }

@@ -83,94 +83,101 @@ export function convertLambdaNFAtoDFA(fa: FiniteAutomaton): FiniteAutomaton {
 }
 
 
-
 export function convertLambdaNFAtoNFA(fa: FiniteAutomaton): FiniteAutomaton {
-    const newTransitions: Transition[] = [];
-    const stateIds = Object.keys(fa.states);
+    const startClosure = Array.from(getLambdaClosure(fa as any, fa.startStates[0])).sort();
     
-    const transitionMap = new Map<string, string[]>();
-    for (const t of fa.transitions) {
-        if (t.symbol !== null && t.symbol !== "" && t.symbol !== "λ" && t.symbol !== "ε") {
-            const key = `${t.from}|${t.symbol}`;
-            if (!transitionMap.has(key)) transitionMap.set(key, []);
-            transitionMap.get(key)!.push(t.to);
+    const subsetToIdMap = new Map<string, string>();
+    const idToSubsetMap = new Map<string, string[]>();
+    
+    function getOrCreateStateId(closure: string[]): string {
+        const key = closure.join(",");
+        if (!subsetToIdMap.has(key)) {
+            const newId = generateId();
+            subsetToIdMap.set(key, newId);
+            idToSubsetMap.set(newId, closure);
         }
+        return subsetToIdMap.get(key)!;
     }
 
-    const closureCache = new Map<string, string[]>();
+    const cleanStartId = getOrCreateStateId(startClosure);
+    const queue = [cleanStartId];
+    const visited = new Set<string>([cleanStartId]);
     
-    for (let i = 0; i < stateIds.length; i++) {
-        const id = stateIds[i];
-        const closureSet = getLambdaClosure(fa as any, id);
-        closureCache.set(id, Array.from(closureSet));
-    }
-    
-    for (const fromId of stateIds) {
-        const initialClosure = closureCache.get(fromId) || [];
+    const finalTransitions: Transition[] = [];
+    const uniqueEdgeChecker = new Set<string>();
+
+    while (queue.length > 0) {
+        const currentId = queue.shift()!;
+        const currentSubset = idToSubsetMap.get(currentId)!;
 
         for (const symbol of fa.alphabet) {
-            const targetSet = new Set<string>();
-
-            for (const closureId of initialClosure) {
-                const mapKey = `${closureId}|${symbol}`;
-                const directlyReachable = transitionMap.get(mapKey);
-
-                if (directlyReachable) {
-                    for (const targetId of directlyReachable) {
-                        const destinationClosure = closureCache.get(targetId) || [];
-                        for (const finalId of destinationClosure) {
-                            targetSet.add(finalId);
-                        }
-                    }
+            const directTargets = new Set<string>();
+            for (const stateId of currentSubset) {
+                const structuralEdges = fa.transitions.filter(t => t.from === stateId && t.symbol === symbol);
+                for (const edge of structuralEdges) {
+                    directTargets.add(edge.to);
                 }
             }
 
-            for (const toId of targetSet) {
-                newTransitions.push({
-                    id: generateId(),
-                    from: fromId,
-                    symbol: symbol,
-                    to: toId
-                });
-            }
-        }
-    }
+            if (directTargets.size > 0) {
+                const combinedClosure = new Set<string>();
+                for (const target of directTargets) {
+                    const closure = getLambdaClosure(fa as any, target);
+                    for (const cid of closure) combinedClosure.add(cid);
+                }
 
-    const newAcceptStates = stateIds.filter(id => {
-        const closure = closureCache.get(id) || [];
-        return closure.some(closureId => fa.acceptStates.includes(closureId));
-    });
+                const sortedClosure = Array.from(combinedClosure).sort();
+                const targetStateId = getOrCreateStateId(sortedClosure);
 
-    const accessibleStates = new Set<string>([...fa.startStates]);
-    const queue = [...fa.startStates];
+                const edgeKey = `${currentId}->${targetStateId}|${symbol}`;
+                if (!uniqueEdgeChecker.has(edgeKey)) {
+                    uniqueEdgeChecker.add(edgeKey);
+                    finalTransitions.push({
+                        id: generateId(),
+                        from: currentId,
+                        to: targetStateId,
+                        symbol: symbol
+                    });
+                }
 
-    while (queue.length > 0) {
-        const current = queue.shift()!;
-        const outgoing = newTransitions.filter(t => t.from === current);
-        for (const edge of outgoing) {
-            if (!accessibleStates.has(edge.to)) {
-                accessibleStates.add(edge.to);
-                queue.push(edge.to);
+                if (!visited.has(targetStateId)) {
+                    visited.add(targetStateId);
+                    queue.push(targetStateId);
+                }
             }
         }
     }
 
     const dynamicStates: Record<string, any> = {};
-    for (const id of stateIds) {
-        if (accessibleStates.has(id)) {
-            dynamicStates[id] = { ...fa.states[id] };
-        }
+    let stateIndex = 0;
+
+    for (const [id, subset] of idToSubsetMap.entries()) {
+        const isAccept = subset.some(sid => fa.acceptStates.includes(sid));
+        
+        dynamicStates[id] = {
+            id,
+            label: `q${stateIndex++}`,
+            isStart: id === cleanStartId,
+            accepting: isAccept,
+            x: 0, 
+            y: 0
+        };
     }
+
+    const finalAcceptStates = Array.from(idToSubsetMap.keys()).filter(id => {
+        const subset = idToSubsetMap.get(id)!;
+        return subset.some(sid => fa.acceptStates.includes(sid));
+    });
 
     return {
         id: fa.id,
         createdAt: fa.createdAt,
-        name: `${fa.name} (NFA)`,
+        name: `${fa.name} (Clean NFA)`,
         alphabet: [...fa.alphabet],
         states: dynamicStates,
-        transitions: newTransitions.filter(t => accessibleStates.has(t.from) && accessibleStates.has(t.to)), 
-        startStates: [...fa.startStates],
-        acceptStates: newAcceptStates.filter(id => accessibleStates.has(id)),
+        transitions: finalTransitions,
+        startStates: [cleanStartId],
+        acceptStates: finalAcceptStates,
         kind: "nfa"
     };
 }

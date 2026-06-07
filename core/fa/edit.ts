@@ -368,8 +368,8 @@ export function stateIsUnreachable(fa:FiniteAutomaton, stateId: StateId) : boole
 
 export function stateIsSink(fa:FiniteAutomaton, stateId:StateId) : boolean {
     if (isStateAccepting(fa, stateId) || stateIsUnreachable(fa, stateId)) { return false }
-    for (const startState of fa.startStates) {
-        if (stateIsAccessible(fa,stateId,startState)) {return false}
+    for (const acceptedState of fa.acceptStates) {
+        if (stateIsAccessible(fa,stateId,acceptedState)) {return false}
     }
     return true
 }
@@ -379,57 +379,82 @@ export function stateIsSink(fa:FiniteAutomaton, stateId:StateId) : boolean {
 
 export function applyNaiveLayout(automaton: FiniteAutomaton): FiniteAutomaton {
     const states = { ...automaton.states };
+    const stateIds = Object.keys(states);
+    
+    const stateLayers = new Map<string, number>();
     const visited = new Set<string>();
-    
-    const statePositions = new Map<string, { x: number; y: number }>();
-    let globalIndex = 0;
-    
-    const labelMapping = new Map<string, string>();
 
-    function layoutState(stateId: string, currentX: number, currentY: number) {
-        if (visited.has(stateId)) {
-            const existing = statePositions.get(stateId)!;
-            if (currentX > existing.x) {
-                existing.x = Math.max(existing.x, currentX);
-            }
-            return;
+    if (automaton.startStates.length > 0) {
+        const queue: { id: string; layer: number }[] = [];
+        
+        for (const startId of automaton.startStates) {
+            queue.push({ id: startId, layer: 0 });
+            visited.add(startId);
+            stateLayers.set(startId, 0);
         }
 
-        visited.add(stateId);
-        statePositions.set(stateId, { x: currentX, y: currentY });
-        
-        labelMapping.set(stateId, `q${globalIndex++}`);
+        while (queue.length > 0) {
+            const { id, layer } = queue.shift()!;
 
-        const outgoing = automaton.transitions.filter(t => t.from === stateId);
-        
-        outgoing.forEach((t, index) => {
-            const xOffset = 180; 
-            
-            let yOffset = 0;
-            if (outgoing.length > 1) {
-                yOffset = (index - (outgoing.length - 1) / 2) * 120;
+            const outgoing = automaton.transitions.filter(t => t.from === id);
+            for (const edge of outgoing) {
+                if (!visited.has(edge.to)) {
+                    visited.add(edge.to);
+                    stateLayers.set(edge.to, layer + 1);
+                    queue.push({ id: edge.to, layer: layer + 1 });
+                }
             }
+        }
+    }
 
-            layoutState(t.to, currentX + xOffset, currentY + yOffset);
+    let maxLayer = Array.from(stateLayers.values()).reduce((max, l) => Math.max(max, l), 0);
+    for (const id of stateIds) {
+        if (!stateLayers.has(id)) {
+            stateLayers.set(id, maxLayer + 1);
+        }
+    }
+
+    const layerGroups = new Map<number, string[]>();
+    for (const id of stateIds) {
+        const layer = stateLayers.get(id)!;
+        if (!layerGroups.has(layer)) layerGroups.set(layer, []);
+        layerGroups.get(layer)!.push(id);
+    }
+
+    const X_GAP = 200; 
+    const Y_GAP = 140; 
+    const CANVAS_Y_CENTER = 300; 
+    const statePositions = new Map<string, { x: number; y: number }>();
+    
+    for (const [layer, idsInLayer] of layerGroups.entries()) {
+        const totalNodesInLayer = idsInLayer.length;
+        const xPos = 100 + layer * X_GAP;
+
+        idsInLayer.forEach((id, index) => {
+            const centerOffset = (index - (totalNodesInLayer - 1) / 2) * Y_GAP;
+            const yPos = CANVAS_Y_CENTER + centerOffset;
+
+            statePositions.set(id, { x: xPos, y: yPos });
         });
     }
 
-    if (automaton.startStates.length > 0) {
-        layoutState(automaton.startStates[0], 100, 200);
-    }
+    const sortedStateIdsForLabeling = [...stateIds].sort((a, b) => {
+        const layerA = stateLayers.get(a)!;
+        const layerB = stateLayers.get(b)!;
+        if (layerA !== layerB) return layerA - layerB;
+        return (statePositions.get(a)?.y || 0) - (statePositions.get(b)?.y || 0);
+    });
 
-    for (const stateId in states) {
-        if (!visited.has(stateId)) {
-            statePositions.set(stateId, { x: 100, y: 400 });
-            labelMapping.set(stateId, `q${globalIndex++}`);
-        }
-    }
+    const labelMapping = new Map<string, string>();
+    sortedStateIdsForLabeling.forEach((id, index) => {
+        labelMapping.set(id, `q${index}`);
+    });
 
-    for (const stateId in states) {
-        const coords = statePositions.get(stateId) || { x: 0, y: 0 };
-        states[stateId] = {
-            ...states[stateId],
-            label: labelMapping.get(stateId) || states[stateId].label,
+    for (const id in states) {
+        const coords = statePositions.get(id) || { x: 100, y: 300 };
+        states[id] = {
+            ...states[id],
+            label: labelMapping.get(id) || states[id].label,
             x: coords.x,
             y: coords.y
         };
