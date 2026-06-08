@@ -48,10 +48,14 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
         onAutomatonChange(renameState(automaton, stateId, newLabel));
     };
 
-    // WIP
-    const handleCompileRegex = (expression: string) => {
-        onAutomatonChange(convertRegexToAutomaton(expression))
-    };
+    const handleCompileRegex = (expression: string, previousName: string) => {
+    const compiledAutomaton = convertRegexToAutomaton(expression);
+    // so the name doesn't change
+    onAutomatonChange({
+        ...compiledAutomaton,
+        name: previousName
+    });
+};
 
     const handleBulkInputs = (bulkInputs: string) => {
         console.log("WIP: Running current machine on:", bulkInputs);
@@ -517,7 +521,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                                 onSubmit={(e) => {
                                                     e.preventDefault();
                                                     if (!validation.valid) return;
-                                                    handleCompileRegex(regex);
+                                                    handleCompileRegex(regex, automaton.name);
                                                 }}
                                                 className="flex gap-2 animate-fadeIn"
                                             >
