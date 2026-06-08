@@ -147,7 +147,9 @@ export default function TransitionEdge({ id, sourceX, sourceY,
                     }}
                     style={{
                         position: "absolute",
-                        transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+                        top:  `${labelY}px`,
+                        left:  `${labelX}px`,
+                        transform: `translate(-50%, -50%)`,
                         pointerEvents: "all",
                         zIndex: 10
                     }}

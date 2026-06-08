@@ -1,9 +1,12 @@
 "use client"
 
-import { useState, useRef, useMemo, useCallback } from "react"
-import AutomataTabs from "@/components/automata/AutomataTabs"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
+import AutomataTabs from "@/components/AutomataTabs"
 import AutomataCanvas from "@/components/automata/AutomataCanvas"
+import WorkspaceToolbar from "@/components/WorkspaceToolbar"
 import { generateId } from "@/core/shared"
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { Project } from "@/types"
 
 //machine example
 function createExampleFA(id: string, name: string) {
@@ -45,109 +48,223 @@ function createEmptyAutomaton(id: string, name: string) {
   };
 }
 
-export default function Home() {
-  // tracks simple metadata for tabs at the top level
-  const [activeTabId, setActiveTabId] = useState<string>("tab-initial")
-  const [tabs, setTabs] = useState<Array<{ id: string }>>([
-    { id: "tab-initial"}
-  ])
-
-  const [automataCollection, setAutomataCollection] = useState<Record<string, any>>({
+const INITIAL_PROJECT_STATE: Project = {
+  activeAutomataId: "tab-initial",
+  tabsOrder: ["tab-initial"],
+  automata: {
     "tab-initial": createExampleFA("tab-initial", "DFA 1")
-  })
+  }
+};
+
+export default function Home() {
+  const [project, setProject] = useLocalStorage<Project>("automata_studio_project_v1", INITIAL_PROJECT_STATE);
+
+  // Next.js Hydration Guard
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   //active tab view slot here
-  const currentAutomaton = automataCollection[activeTabId] || automataCollection[tabs[0].id]
+  const currentAutomaton = useMemo(() => {
+    const activeId = project.activeAutomataId;
+    return project.automata[activeId] || project.automata[project.tabsOrder[0]];
+  }, [project]);
 
   const canvasSaveRef = useRef<(() => any) | null>(null);
 
-  // This handles switching tabs, but forces a manual save of the outgoing tab FIRST
-  const handleSelectTab = (nextTabId: string) => {
-    if (nextTabId === activeTabId) return;
-
-    // Ask the canvas for its absolute latest data right now
+  // Saves the canvas data to memory
+  const saveActiveCanvasToMemory = useCallback(() => {
     if (canvasSaveRef.current) {
       const latestFaData = canvasSaveRef.current();
       if (latestFaData) {
-        setAutomataCollection(prev => ({
+        setProject(prev => ({
           ...prev,
-          [activeTabId]: latestFaData
+          automata: {
+            ...prev.automata,
+            [prev.activeAutomataId]: latestFaData
+          }
         }));
       }
     }
-    
-    // change the tab safely
-    setActiveTabId(nextTabId);
+  }, [setProject]);
+
+  // This handles switching tabs, but forces a manual save of the outgoing tab FIRST
+  const handleSelectTab = (nextTabId: string) => {
+    if (nextTabId === project.activeAutomataId) return;
+    saveActiveCanvasToMemory();
+    setProject(prev => ({ ...prev, activeAutomataId: nextTabId }));
   }
 
   //ADD
   const handleAddTab = () => {
-    const newId = `tab-${Date.now()}`
-    const newName = `Automaton ${tabs.length + 1}`
-    const newAutomaton = createEmptyAutomaton(newId, newName)
+    saveActiveCanvasToMemory();
+    const newId = `tab-${Date.now()}`;
+    const newName = `Automaton ${project.tabsOrder.length + 1}`;
+    const newAutomaton = createEmptyAutomaton(newId, newName);
 
-    setAutomataCollection(prev => ({ ...prev, [newId]: newAutomaton }))
-    setTabs([...tabs, { id: newId }])
-    setActiveTabId(newId)
+    setProject(prev => ({
+      ...prev,
+      tabsOrder: [...prev.tabsOrder, newId],
+      automata: { ...prev.automata, [newId]: newAutomaton },
+      activeAutomataId: newId
+    }));
   }
 
   //DELETE
   const handleDeleteTab = (idToDelete: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (tabs.length === 1) return
+    e.stopPropagation();
+    if (project.tabsOrder.length === 1) return;
 
-    const nextTabs = tabs.filter(t => t.id !== idToDelete)
-    setTabs(nextTabs)
+    setProject(prev => {
+      const nextTabsOrder = prev.tabsOrder.filter(id => id !== idToDelete);
+      const nextAutomata = { ...prev.automata };
+      delete nextAutomata[idToDelete];
 
-    setAutomataCollection(prev => {
-      const updated = { ...prev }
-      delete updated[idToDelete]
-      return updated
-    })
+      let nextActiveId = prev.activeAutomataId;
+      if (prev.activeAutomataId === idToDelete) {
+        const currentIndex = prev.tabsOrder.indexOf(idToDelete);
+        nextActiveId = nextTabsOrder[Math.max(0, currentIndex - 1)];
+      }
 
-    if (activeTabId === idToDelete) {
-      const currentIndex = tabs.findIndex(t => t.id === idToDelete)
-      setActiveTabId(nextTabs[Math.max(0, currentIndex - 1)].id)
-    }
+      return {
+        activeAutomataId: nextActiveId,
+        tabsOrder: nextTabsOrder,
+        automata: nextAutomata
+      };
+    });
   }
 
   //CHANGES FROM CANVAS HERE
   const handleCanvasChange = (updatedFa: any) => {
     if (!updatedFa) return;
-    setAutomataCollection(prev => ({
+    setProject(prev => ({
       ...prev,
-      [activeTabId]: updatedFa
+      automata: {
+        ...prev.automata,
+        [prev.activeAutomataId]: updatedFa
+      }
     }));
   };
 
   // Updates the tab name with the automaton name
   const handleLiveRename = useCallback((newName: string) => {
-    setAutomataCollection(prev => {
-      if (prev[activeTabId]?.name === newName) return prev;
-      
+    setProject(prev => {
+      const currentActive = prev.automata[prev.activeAutomataId];
+      if (currentActive?.name === newName) return prev;
+
       return {
         ...prev,
-        [activeTabId]: {
-          ...prev[activeTabId],
-          name: newName
+        automata: {
+          ...prev.automata,
+          [prev.activeAutomataId]: {
+            ...currentActive,
+            name: newName
+          }
         }
       };
     });
-  }, [activeTabId]);
+  }, [setProject]);
+
+  // EXPORT FILE (.json)
+  const handleExportProject = () => {
+    // Get the absolute newest data directly from the canvas execution ref right now
+    let latestAutomataCollection = project.automata;
+    
+    if (canvasSaveRef.current) {
+      const latestFaData = canvasSaveRef.current();
+      if (latestFaData && latestFaData.id) {
+        latestAutomataCollection = {
+          ...project.automata,
+          [latestFaData.id]: latestFaData
+        };
+      }
+    }
+
+    // Build the exact payload manually using the freshest snapshot
+    const exactProjectPayload = {
+      activeAutomataId: project.activeAutomataId,
+      tabsOrder: project.tabsOrder,
+      automata: latestAutomataCollection
+    };
+
+    // Force download instantly 
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exactProjectPayload));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `automata_project_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  // IMPORT FILE
+  const handleImportProject = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    fileReader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        
+        if (parsed && parsed.activeAutomataId && Array.isArray(parsed.tabsOrder) && parsed.automata) {
+          
+          // Clear any canvas refs to prevent outgoing components from firing uncommitted saves
+          if (canvasSaveRef.current) {
+            canvasSaveRef.current = null;
+          }
+
+          // Commit the imported data directly to storage & state
+          setProject(parsed);
+          
+          // Force a micro-render buffer sequence to let React Flow unmount safely
+          alert("Project imported successfully! :)");
+        } else {
+          alert("Invalid project schema file configuration.");
+        }
+      } catch (err) {
+        alert("Failed to parse JSON file structure cleanly.");
+      }
+    };
+    
+    fileReader.readAsText(file);
+    
+    // Clear input value so selecting the same file back-to-back works
+    e.target.value = "";
+  };
+
+  // RESET ESCAPE HATCH 
+  const handleClearWorkspace = () => {
+    if (window.confirm("Clear all workspaces? This completely wipes the browser storage state.")) {
+      window.localStorage.removeItem("automata_studio_project_v1");
+      window.location.reload();
+    }
+  }
 
 
-  // converts metadata into the Project structural format Tab component expects
-  const projectedProject = useMemo(() => ({
-    activeAutomataId: activeTabId,
-    tabsOrder: tabs.map(t => t.id),
-    automata: automataCollection
-  }), [activeTabId, tabs, automataCollection]);
+  // Prevent Next.js from rendering server components before loading localStorage
+  if (!isMounted) {
+    return (
+      <div className="w-screen h-screen bg-stone-50 flex items-center justify-center font-mono text-xs text-stone-400">
+        Booting engine studio storage matrix...
+      </div>
+    );
+  }
 
   return (
     <main className="w-screen h-screen flex flex-col bg-stone-50 overflow-hidden select-none">
+      {/* Utility Bar for Persistence Operations */}
+      <WorkspaceToolbar 
+        onExport={handleExportProject}
+        onImport={handleImportProject}
+        onClear={handleClearWorkspace}
+      />
+
+
       {/* Global Navigation */}
       <AutomataTabs
-        project={projectedProject}
+        project={project}
         onSelectTab={handleSelectTab}
         onAddTab={handleAddTab}
         onDeleteTab={handleDeleteTab}
@@ -155,8 +272,8 @@ export default function Home() {
 
       {/* Main Interactive Studio Canvas Container */}
       <div className="flex-1 w-full relative overflow-hidden">
-        <AutomataCanvas 
-          activeData={currentAutomaton} 
+        <AutomataCanvas
+          activeData={currentAutomaton}
           onSave={handleCanvasChange}
           onLiveRename={handleLiveRename}
           saveHookRef={canvasSaveRef}

@@ -224,7 +224,7 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef }
     }, [fa, setActiveStateId]);
 
     return (
-        <div className="w-full h-screen bg-stone-100 relative">
+        <div className="w-full h-full bg-stone-100 relative">
             <SimulationControls
                 fa={computedAutomaton}
                 onAutomataChange={handleAutomataChange}

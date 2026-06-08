@@ -66,7 +66,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
         <div className="absolute top-0 left-0 h-full z-[90] flex items-center pointer-events-none">
             {/* MAIN */}
             <div
-                className={`h-[calc(100vh-2rem)] my-4 ml-4 bg-white/95 backdrop-blur-md border border-stone-200 shadow-2xl rounded-2xl flex flex-col transition-all duration-300 pointer-events-auto overflow-hidden
+                className={`h-[calc(100%-2rem)] my-4 ml-4 bg-white/95 backdrop-blur-md border border-stone-200 shadow-2xl rounded-2xl flex flex-col transition-all duration-300 pointer-events-auto overflow-hidden
                     ${isOpen ? "w-80 opacity-100" : "w-0 opacity-0 border-none ml-0"}
                 `}
             >
