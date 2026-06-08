@@ -76,18 +76,21 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
                 const oldAcceptId = combinedGraph.acceptId;
                 const redundantStartId = nextGraph.startId;
 
+                const mergedStates = { ...combinedGraph.states, ...nextGraph.states };
+                
                 const updatedNextTransitions = nextGraph.transitions.map(t => ({
                     ...t,
                     from: t.from === redundantStartId ? oldAcceptId : t.from,
                     to: t.to === redundantStartId ? oldAcceptId : t.to
                 }));
 
-                const mergedStates = { ...combinedGraph.states, ...nextGraph.states };
+                const finalAcceptId = nextGraph.acceptId === redundantStartId ? oldAcceptId : nextGraph.acceptId;
+
                 delete mergedStates[redundantStartId];
 
                 combinedGraph = {
                     startId: combinedGraph.startId,
-                    acceptId: nextGraph.acceptId === redundantStartId ? oldAcceptId : nextGraph.acceptId,
+                    acceptId: finalAcceptId,
                     states: mergedStates,
                     transitions: [...combinedGraph.transitions, ...updatedNextTransitions]
                 };
@@ -188,7 +191,9 @@ export function convertRegexToAutomaton(regexString: string): FiniteAutomaton {
         alphabet: extractAlphabetFromAST(ast)
     }
 
-    return applyNaiveLayout(automaton);
+    const laidOut = applyNaiveLayout(automaton);
+
+    return laidOut;
 }
 
 export function extractAlphabetFromAST(ast: Regex): string[] {

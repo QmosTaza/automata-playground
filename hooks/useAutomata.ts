@@ -78,7 +78,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
     useEffect(() => {
         setNodes((currentNodes) => {
             const nextNodes = faToNodes(fa, onToggleAccept, onRename, onToggleStart, activeStateId);
-            
+
             // instant lookup index map of our existing canvas nodes
             const existingNodesMap = new Map(currentNodes.map(n => [n.id, n]));
 
@@ -100,7 +100,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
         });
         setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
     }, [fa, activeStateId, onToggleAccept, onRename, onToggleStart, handleUpdateSymbols, handleRemoveEdge]);
-    
+
     // Keep structural alterations isolated locally
     const onNodesChange = useCallback((changes: any) => {
         setNodes((nds) => applyNodeChanges(changes, nds));

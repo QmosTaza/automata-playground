@@ -81,14 +81,20 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef }
     }, [setFa]);
 
     // Swaps out the entire environment dataset when clicking a different tab
+    const [isSyncing, setIsSyncing] = useState(false);
+
     useEffect(() => {
         if (activeData && activeData.id !== fa.id) {
+            setIsSyncing(true);
             setFa(activeData);
-            
             setSimulationResults(null);
             setActiveStateId(null);
+
+            // Use a short timeout to unlock, allowing ReactFlow to settle
+            const timer = setTimeout(() => setIsSyncing(false), 100);
+            return () => clearTimeout(timer);
         }
-    }, [activeData?.id, fa.id]);
+    }, [activeData?.id]);
 
     //No compilation during node movement or simple clicks
     const [debouncedRegex, setDebouncedRegex] = useState("");
@@ -119,7 +125,6 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef }
     useEffect(() => {
         onLiveRename?.(fa.name);
     }, [fa.name, onLiveRename]);
-
 
     const [simulationResults, setSimulationResults] = useState<SimulationResult | SimulationResult[] | null>(null);
 
