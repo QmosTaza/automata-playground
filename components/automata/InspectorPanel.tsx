@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiniteAutomaton } from "@/types";
 import { renameAutomaton, addSymbolToAlphabet, removeSymbolFromAlphabet, renameState, cleanSymbol, updateTransition, removeTransition, stateIsAccessible, stateIsUnreachable, stateIsSink } from "@/core/fa/edit";
 import { convertRegexToAutomaton, validateRegexInput } from "@/core/fa/regex";
@@ -49,17 +49,18 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
     };
 
     const handleCompileRegex = (expression: string, previousName: string) => {
-    const compiledAutomaton = convertRegexToAutomaton(expression);
-    // so the name doesn't change
-    onAutomatonChange({
-        ...compiledAutomaton,
-        name: previousName
-    });
-};
+        const compiledAutomaton = convertRegexToAutomaton(expression);
+        // so the name doesn't change
+        onAutomatonChange({
+            ...compiledAutomaton,
+            name: previousName
+        });
+        setRegex("");
+    };
 
-    const handleBulkInputs = (bulkInputs: string) => {
-        console.log("WIP: Running current machine on:", bulkInputs);
-    }
+    useEffect(() => {
+        setBulkInputs("");
+    }, [automaton.id]);
 
     return (
         <div className="absolute top-0 left-0 h-full z-[90] flex items-center pointer-events-none">
@@ -164,7 +165,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                             {/* Formal Def*/}
                             <div className="space-y-2 border-t border-stone-200/60 pt-4">
                                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none block mb-1">
-                                    Formal 5-Tuple Definition
+                                    Formal Definition
                                 </label>
                                 <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-2 text-xs font-mono text-stone-600 select-none nodrag select-text cursor-text">
                                     <div className="space-y-1.5">
@@ -634,8 +635,8 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                         const passed = lines.filter(str => evaluateString(automaton, str)).length;
                                         return (
                                             <span className={`text-[9px] font-bold border px-2 py-0.5 rounded-md tracking-wide uppercase select-none ${passed === total
-                                                    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                                                    : "text-amber-800 bg-amber-50 border-amber-200"
+                                                ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                                                : "text-amber-800 bg-amber-50 border-amber-200"
                                                 }`}>
                                                 {passed} / {total} PASSED
                                             </span>
@@ -674,8 +675,8 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                                         <span
                                                             key={index}
                                                             className={`inline-block text-xs font-mono font-medium rounded-md px-2 py-0.5 border shadow-sm transition-colors select-text ${isAccepted
-                                                                    ? "bg-emerald-50 text-emerald-800 border-emerald-200/60"
-                                                                    : "bg-rose-50 text-rose-800 border-rose-200/60"
+                                                                ? "bg-emerald-50 text-emerald-800 border-emerald-200/60"
+                                                                : "bg-rose-50 text-rose-800 border-rose-200/60"
                                                                 }`}
                                                         >
                                                             <span className="font-bold mr-1 select-none">

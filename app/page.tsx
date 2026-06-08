@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useMemo, useCallback } from "react"
 import AutomataTabs from "@/components/automata/AutomataTabs"
 import AutomataCanvas from "@/components/automata/AutomataCanvas"
 import { generateId } from "@/core/shared"
@@ -48,8 +48,8 @@ function createEmptyAutomaton(id: string, name: string) {
 export default function Home() {
   // tracks simple metadata for tabs at the top level
   const [activeTabId, setActiveTabId] = useState<string>("tab-initial")
-  const [tabs, setTabs] = useState<Array<{ id: string; name: string }>>([
-    { id: "tab-initial", name: "DFA 1" }
+  const [tabs, setTabs] = useState<Array<{ id: string }>>([
+    { id: "tab-initial"}
   ])
 
   const [automataCollection, setAutomataCollection] = useState<Record<string, any>>({
@@ -79,6 +79,7 @@ export default function Home() {
     // change the tab safely
     setActiveTabId(nextTabId);
   }
+
   //ADD
   const handleAddTab = () => {
     const newId = `tab-${Date.now()}`
@@ -86,7 +87,7 @@ export default function Home() {
     const newAutomaton = createEmptyAutomaton(newId, newName)
 
     setAutomataCollection(prev => ({ ...prev, [newId]: newAutomaton }))
-    setTabs([...tabs, { id: newId, name: newName }])
+    setTabs([...tabs, { id: newId }])
     setActiveTabId(newId)
   }
 
@@ -117,17 +118,30 @@ export default function Home() {
       ...prev,
       [activeTabId]: updatedFa
     }));
-
-    setTabs(prev => prev.map(t => t.id === activeTabId && t.name !== updatedFa.name ? { ...t, name: updatedFa.name } : t));
   };
+
+  // Updates the tab name with the automaton name
+  const handleLiveRename = useCallback((newName: string) => {
+    setAutomataCollection(prev => {
+      if (prev[activeTabId]?.name === newName) return prev;
+      
+      return {
+        ...prev,
+        [activeTabId]: {
+          ...prev[activeTabId],
+          name: newName
+        }
+      };
+    });
+  }, [activeTabId]);
 
 
   // converts metadata into the Project structural format Tab component expects
-  const projectedProject = {
+  const projectedProject = useMemo(() => ({
     activeAutomataId: activeTabId,
     tabsOrder: tabs.map(t => t.id),
     automata: automataCollection
-  }
+  }), [activeTabId, tabs, automataCollection]);
 
   return (
     <main className="w-screen h-screen flex flex-col bg-stone-50 overflow-hidden select-none">
@@ -143,7 +157,8 @@ export default function Home() {
       <div className="flex-1 w-full relative overflow-hidden">
         <AutomataCanvas 
           activeData={currentAutomaton} 
-          onSave={handleCanvasChange} 
+          onSave={handleCanvasChange}
+          onLiveRename={handleLiveRename}
           saveHookRef={canvasSaveRef}
         />
       </div>

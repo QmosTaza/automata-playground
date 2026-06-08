@@ -1,5 +1,7 @@
 "use client";
 
+import React from 'react';
+
 interface AutomataTabsProps {
     project: {
         activeAutomataId: string;
@@ -11,7 +13,7 @@ interface AutomataTabsProps {
     onDeleteTab: (id: string, e: React.MouseEvent) => void;
 }
 
-export default function AutomataTabs({
+function AutomataTabs({
     project,
     onSelectTab,
     onAddTab,
@@ -86,3 +88,5 @@ export default function AutomataTabs({
         </div>
     );
 }
+
+export default React.memo(AutomataTabs);

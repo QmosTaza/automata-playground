@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { Node, Edge, applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
 import { FiniteAutomaton, DFA, NFA, LambdaNFA, AutomatonBase } from "@/types";
 import { faToNodes, faToEdges } from "@/visualizers";
@@ -17,6 +17,15 @@ export function useAutomata(initialFA: FiniteAutomaton) {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [activeStateId, setActiveStateId] = useState<string | null>(null);
+
+    // Keep an active tab ID tracker to handle data channel cleaning safely
+    const currentFaIdRef = useRef(initialFA.id);
+
+    // Synchronize local state with fresh data payloads when switching tab channels
+    useEffect(() => {
+        setFa(initialFA);
+        currentFaIdRef.current = initialFA.id;
+    }, [initialFA.id]);
 
     const onToggleAccept = useCallback((id: string) => {
         setFa(prev => toggleAcceptState(prev, id));
@@ -65,11 +74,17 @@ export function useAutomata(initialFA: FiniteAutomaton) {
         setFa(prev => removeTransition(prev, edgeId));
     }, []);
 
+    // stops React Flow from reprocessing graph visuals on irrelevant renders
     useEffect(() => {
         setNodes((currentNodes) => {
             const nextNodes = faToNodes(fa, onToggleAccept, onRename, onToggleStart, activeStateId);
+            
+            // instant lookup index map of our existing canvas nodes
+            const existingNodesMap = new Map(currentNodes.map(n => [n.id, n]));
+
+            // Stitch the metadata matching properties together -> O(n)
             return nextNodes.map(newNode => {
-                const existingNode = currentNodes.find(n => n.id === newNode.id);
+                const existingNode = existingNodesMap.get(newNode.id);
                 return {
                     ...newNode,
                     position: existingNode?.position || newNode.position,
@@ -84,9 +99,9 @@ export function useAutomata(initialFA: FiniteAutomaton) {
             });
         });
         setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
-        
-    }, [fa, activeStateId]);
+    }, [fa, activeStateId, onToggleAccept, onRename, onToggleStart, handleUpdateSymbols, handleRemoveEdge]);
     
+    // Keep structural alterations isolated locally
     const onNodesChange = useCallback((changes: any) => {
         setNodes((nds) => applyNodeChanges(changes, nds));
     }, []);
@@ -95,6 +110,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
         setEdges((eds) => applyEdgeChanges(changes, eds));
     }, []);
 
+    // Commit coordinate layout changes ONLY when dragging finishes
     const onNodeDragStop = useCallback((_: any, node: Node) => {
         setFa(prev => {
             const state = prev.states[node.id];
@@ -109,7 +125,8 @@ export function useAutomata(initialFA: FiniteAutomaton) {
         });
     }, []);
 
-    const validationErrors = (() => {
+    // stops complex graph validation routines from executing on every frame render
+    const validationErrors = useMemo(() => {
         switch (fa.kind) {
             case "dfa":
                 const dfaErrors = validateDFA(fa as DFA & AutomatonBase);
@@ -123,11 +140,11 @@ export function useAutomata(initialFA: FiniteAutomaton) {
                 return [...lambdanfaErrors.errors];
         }
         return [];
-    })();
+    }, [fa]);
 
-    const canRunSimulation = validationErrors.filter(e =>
-        e.type !== "MISSING_TRANSITION"
-    ).length === 0;
+    const canRunSimulation = useMemo(() => {
+        return validationErrors.filter(e => e.type !== "MISSING_TRANSITION").length === 0;
+    }, [validationErrors]);
 
     return {
         fa,

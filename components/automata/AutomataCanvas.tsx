@@ -25,18 +25,19 @@ const edgeTypes = { transition: TransitionEdge };
 interface AutomataCanvasProps {
     activeData: any;
     onSave: (updatedFa: any) => void;
+    onLiveRename?: (newName: string) => void;
     saveHookRef: React.MutableRefObject<(() => any) | null>;
 }
 
-export default function AutomataCanvas({ activeData, onSave, saveHookRef }: AutomataCanvasProps) {
+export default function AutomataCanvas({ activeData, onSave, onLiveRename, saveHookRef }: AutomataCanvasProps) {
     return (
         <ReactFlowProvider>
-            <AutomataCanvasContent activeData={activeData} onSave={onSave} saveHookRef={saveHookRef} />
+            <AutomataCanvasContent activeData={activeData} onSave={onSave} onLiveRename={onLiveRename} saveHookRef={saveHookRef} />
         </ReactFlowProvider>
     );
 }
 
-function AutomataCanvasContent({ activeData, onSave, saveHookRef }: AutomataCanvasProps) {
+function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef }: AutomataCanvasProps) {
 
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
@@ -72,25 +73,53 @@ function AutomataCanvasContent({ activeData, onSave, saveHookRef }: AutomataCanv
         };
     }, [saveHookRef]);
 
-    // Updates local hook state and safely bubbles up changes
+    // Keeps edits fast and local.
     const updateWorkspace = useCallback((nextFaOrUpdater: any) => {
         setFa((prev: any) => {
-            const nextFa = typeof nextFaOrUpdater === 'function' ? nextFaOrUpdater(prev) : nextFaOrUpdater;
-            if (nextFa) {
-                queueMicrotask(() => {
-                    onSave(nextFa); //concurrency check
-                });
-            }
-            return nextFa;
+            return typeof nextFaOrUpdater === 'function' ? nextFaOrUpdater(prev) : nextFaOrUpdater;
         });
-    }, [setFa, onSave]);
+    }, [setFa]);
 
     // Swaps out the entire environment dataset when clicking a different tab
     useEffect(() => {
         if (activeData && activeData.id !== fa.id) {
             setFa(activeData);
+            
+            setSimulationResults(null);
+            setActiveStateId(null);
         }
-    }, [activeData?.id]);
+    }, [activeData?.id, fa.id]);
+
+    //No compilation during node movement or simple clicks
+    const [debouncedRegex, setDebouncedRegex] = useState("");
+
+    useEffect(() => {
+        if (!isMounted || !canRunSimulation) {
+            setDebouncedRegex("");
+            return;
+        }
+
+        const timerId = setTimeout(() => {
+            try {
+                const freshRegex = convertAutomatonToRegex(fa);
+                setDebouncedRegex(freshRegex);
+            } catch (error) {
+                console.error("Automaton to Regex calculation failed:", error);
+                setDebouncedRegex("");
+            }
+        }, 800); // ms debounce buffer window
+
+        return () => clearTimeout(timerId);
+    }, [fa, canRunSimulation, isMounted]);
+
+    const computedAutomaton = useMemo(() => {
+        return { ...fa, regex: debouncedRegex };
+    }, [fa, debouncedRegex]);
+
+    useEffect(() => {
+        onLiveRename?.(fa.name);
+    }, [fa.name, onLiveRename]);
+
 
     const [simulationResults, setSimulationResults] = useState<SimulationResult | SimulationResult[] | null>(null);
 
@@ -188,20 +217,6 @@ function AutomataCanvasContent({ activeData, onSave, saveHookRef }: AutomataCanv
             }
         }
     }, [fa, setActiveStateId]);
-
-    
-    const computedAutomaton = useMemo(() => {
-        if (!isMounted || !canRunSimulation) {
-            return { ...fa, regex: "" };
-        }
-        try {
-            const freshRegex = convertAutomatonToRegex(fa);
-            return { ...fa, regex: freshRegex };
-        } catch (error) {
-            console.error("Automaton to Regex calculation failed:", error);
-            return { ...fa, regex: "" };
-        }
-    }, [fa, canRunSimulation, isMounted]);
 
     return (
         <div className="w-full h-screen bg-stone-100 relative">

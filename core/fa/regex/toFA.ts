@@ -25,7 +25,7 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
             const acceptId = generateId()
             return {
                 startId,
-                acceptId: startId,
+                acceptId,
                 states: {
                     [startId]: { id: startId, label: "q_λ", x: 0, y: 0 },
                     [acceptId]: { id: acceptId, label: "q_λ_out", x: 0, y: 0 }
@@ -145,25 +145,27 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
         case "star": {
             const childGraph = compileRegexToLambdaNFA(ast.child);
 
-            const loopBackTrack: Transition = {
-                id: generateId(),
-                from: childGraph.acceptId,
-                to: childGraph.startId,
-                symbol: null
+            const wrapperStartId = generateId();
+            const wrapperAcceptId = generateId();
+
+            const newStates = {
+                ...childGraph.states,
+                [wrapperStartId]: { id: wrapperStartId, label: "q_star_src", x: 0, y: 0 },
+                [wrapperAcceptId]: { id: wrapperAcceptId, label: "q_star_dst", x: 0, y: 0 }
             };
 
-            const bypassTrack: Transition = {
-                id: generateId(),
-                from: childGraph.startId,
-                to: childGraph.acceptId,
-                symbol: null
-            };
+            const starTransitions: Transition[] = [
+                { id: generateId(), from: wrapperStartId, to: childGraph.startId, symbol: null },
+                { id: generateId(), from: childGraph.acceptId, to: wrapperAcceptId, symbol: null },
+                { id: generateId(), from: childGraph.acceptId, to: childGraph.startId, symbol: null },
+                { id: generateId(), from: wrapperStartId, to: wrapperAcceptId, symbol: null }
+            ];
 
             return {
-                startId: childGraph.startId,
-                acceptId: childGraph.acceptId,
-                states: childGraph.states,
-                transitions: [...childGraph.transitions, loopBackTrack, bypassTrack]
+                startId: wrapperStartId,
+                acceptId: wrapperAcceptId,
+                states: newStates,
+                transitions: [...childGraph.transitions, ...starTransitions]
             };
         }
     }
