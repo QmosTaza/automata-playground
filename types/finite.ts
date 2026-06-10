@@ -51,3 +51,9 @@ export type Regex =
     | { type: 'concat', children: Regex[] };
 
 
+export type GNFA = {
+  states: string[];
+  start: string;
+  accept: string;
+  R: Map<string, Map<string, Regex>>;
+};

@@ -99,3 +99,7 @@ export function parseRegex(input: string): Regex {
     if (pos !== s.length) throw new Error(`Unexpected token '${s[pos]}' at position ${pos}`);
     return result;
 }
+
+export function empty(): Regex {
+  return { type: "empty" };
+}
