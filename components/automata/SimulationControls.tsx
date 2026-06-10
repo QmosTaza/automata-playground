@@ -121,12 +121,7 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                         title="Add a sink state and redirect missing transitions to make the DFA complete"
                         className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
                     >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-700">
-                            <circle cx="5" cy="12" r="3" />
-                            <path d="M8 12h8" />
-                            <polygon points="13 9 16 12 13 15" fill="currentColor" />
-                            <circle cx="19" cy="12" r="3" fill="currentColor" className="opacity-80" />
-                        </svg>
+                        <i className="nf nf-md-format_color_fill"></i>
                         <span>Make Complete</span>
                     </button>
 
@@ -135,16 +130,10 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                         title="Optimize the automaton by merging equivalent redundant states"
                         className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
                     >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-700">
-                            <path d="M4 6c4 0 7 3 9 6M4 18c4 0 7-3 9-6" />
-                            <path d="M13 12h7" />
-                            <circle cx="20" cy="12" r="2" fill="currentColor" />
-                        </svg>
+                        <i className="nf nf-fa-minimize"></i>
                         <span>Minimize</span>
                     </button>
 
-                    {/* FUTURE DFA ALGORITHMS HERE */}
-                    {/* <div className="h-3 w-px bg-stone-300" /> */}
                 </div>
             )}
 
@@ -159,15 +148,7 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                         title="Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction"
                         className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
                     >
-                        <svg
-                            width="13"
-                            height="13"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="text-amber-700"
-                        >
-                            <path d="M12 2c.5 5.5 5 9.5 10 10-5 .5-9.5 4.5-10 10-.5-5.5-4.5-9.5-10-10 5-.5 9.5-4.5 10-10z" />
-                        </svg>
+                        <i className="nf nf-md-swap_horizontal"></i>
                         <span>Convert to DFA</span>
                     </button>
                 </div>
@@ -184,15 +165,7 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                         title="Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction"
                         className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
                     >
-                        <svg
-                            width="13"
-                            height="13"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="text-amber-700"
-                        >
-                            <path d="M12 2c.5 5.5 5 9.5 10 10-5 .5-9.5 4.5-10 10-.5-5.5-4.5-9.5-10-10 5-.5 9.5-4.5 10-10z" />
-                        </svg>
+                        <i className="nf nf-md-swap_horizontal"></i>
                         <span>Convert to DFA</span>
                     </button>
 
@@ -201,15 +174,7 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                         title="Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction"
                         className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
                     >
-                        <svg
-                            width="13"
-                            height="13"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="text-amber-700"
-                        >
-                            <path d="M12 2c.5 5.5 5 9.5 10 10-5 .5-9.5 4.5-10 10-.5-5.5-4.5-9.5-10-10 5-.5 9.5-4.5 10-10z" />
-                        </svg>
+                        <i className="nf nf-md-swap_horizontal"></i>
                         <span>Convert to NFA</span>
                     </button>
                 </div>

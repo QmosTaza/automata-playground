@@ -2,24 +2,28 @@ import { DFA, FiniteAutomaton, State, StateId, Transition } from "../../../types
 import { createState, createTransition, getTransitionsFromState, getTargetStateDFA, stateIsUnreachable, stateIsSink } from "../edit"
 import { generateId } from "@/core/shared"
 
+//function that completes any DFA
 export function makeDFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
     let sinkStateId: StateId | undefined = Object.keys(fa.states).find(id =>
         stateIsSink(fa, id)
-    );
+    ); //find pre-existing sinks (that arent accepting obviously)
 
+    //otherwise create one
     let createdNewSink = false;
     let sinkStateObj: State | undefined = sinkStateId ? fa.states[sinkStateId] : undefined;
 
+    //which transitions exist already?
     const existing = new Set<string>()
     let newTransitions = [...fa.transitions]
     for (const t of fa.transitions) {
         existing.add(`${t.from}|${t.symbol}`)
     }
+    //create every missing transition to sink 
     for (const stateId in fa.states) {
         for (const symbol of fa.alphabet) {
             const key = `${stateId}|${symbol}`
             if (!existing.has(key)) {
-                if (!sinkStateId) {
+                if (!sinkStateId) { //create sink if none exists
                     sinkStateObj = createState(fa, 0, 0);
                     sinkStateId = sinkStateObj.id;
                     createdNewSink = true;
@@ -28,10 +32,12 @@ export function makeDFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
             }
         }
     }
+    // if no changes, return og (maybe this should happen earlier?)
     if (!sinkStateId || (!createdNewSink && newTransitions.length === fa.transitions.length)) {
         return fa;
     }
 
+    //ensure sink returns transition to itself for each symbol
     if (createdNewSink && sinkStateObj) {
         for (const symbol of fa.alphabet) {
             newTransitions.push(createTransition(sinkStateId, sinkStateId, symbol));
@@ -48,7 +54,10 @@ export function makeDFAComplete(fa: FiniteAutomaton): FiniteAutomaton {
     };
 }
 
+//function that minimizes any DFA
 export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
+    
+    //initially, group states based on whether they are accepting or not
     const allStateIds = Object.keys(fa.states);
 
     let groups: StateId[][] = [
@@ -56,23 +65,25 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
         allStateIds.filter(id => !fa.acceptStates.includes(id) && !stateIsUnreachable(fa, id))
     ].filter(g => g.length > 0);
 
+    //as long as different group members have transitions on the same symbol 
+    // but to different groups from one another (can be split into subgroups), it is not stable
     let stable = false
 
     while (!stable) {
         let newGroups: StateId[][] = [];
         let splitOccurred = false;
 
-        for (const group of groups) {
+        for (const group of groups) { //per group
             let subGroups = [group];
 
-            for (const symbol of fa.alphabet) {
+            for (const symbol of fa.alphabet) { //per available symbol
                 let temporarySplits: StateId[][] = [];
 
-                for (const sub of subGroups) {
+                for (const sub of subGroups) { //per subgroup
                     const refined = refineGroup(fa, sub, groups, symbol);
                     temporarySplits.push(...refined);
 
-                    if (refined.length > 1) {
+                    if (refined.length > 1) { //if subgroup = group
                         splitOccurred = true;
                     }
                 }
@@ -81,6 +92,7 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
             newGroups.push(...subGroups);
         }
 
+        //no more splits = finally stable
         if (!splitOccurred) {
             stable = true;
         } else {
@@ -88,12 +100,14 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
         }
     }
 
+    //create new minimized automaton (might be worth creating a isMinimized function for performance?)
     const newStates: Record<StateId, State> = {};
     const newAcceptStates: StateId[] = [];
     let newStartStates: StateId[] = [];
 
     const oldToNewIdMap: Record<StateId, StateId> = {};
 
+    //for each group, create automaton
     groups.forEach((group, index) => {
         const newId = generateId();
 
@@ -120,6 +134,7 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
         }
     });
 
+    //for each group, create transitions
     const newTransitions: Transition[] = [];
     const seenTransitions = new Set<string>();
 
@@ -154,6 +169,8 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
     };
 }
 
+//AUX FUNCTION that splits a single group into smaller subgroups based on a specific alphabet symbol.
+// States end up in the same subgroup if their transitions on this symbol land in the exact same target group.
 function refineGroup(fa: FiniteAutomaton, currentGroup: StateId[], allGroups: StateId[][], symbol: string): StateId[][] {
     const LandauClusters: Record<number, StateId[]> = {};
 
@@ -171,10 +188,12 @@ function refineGroup(fa: FiniteAutomaton, currentGroup: StateId[], allGroups: St
     return Object.values(LandauClusters);
 }
 
+//AUX FUNCTION finds the index of the group block that contains the given stateId.
 function getGroupIndex(groups: string[][], stateId: string): number {
     return groups.findIndex(group => group.includes(stateId));
 }
 
+//UNUSED AUX FUNCTIONS
 function splitGroup(groupsList: StateId[][], targetGroupIdx: number, split1: StateId[], split2: StateId[]): StateId[][] {
     const updatedGroups = [...groupsList];
     updatedGroups.splice(targetGroupIdx, 1, split1, split2);

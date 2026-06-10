@@ -42,3 +42,12 @@ export interface ThompsonGraph {
     transitions: Transition[];
 }
 
+export type Regex = 
+    | { type: 'epsilon' }
+    | { type: 'empty' }
+    | { type: 'symbol', value: string }
+    | { type: 'star', child: Regex }
+    | { type: 'union', children: Regex[] }
+    | { type: 'concat', children: Regex[] };
+
+

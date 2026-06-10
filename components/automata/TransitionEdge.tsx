@@ -106,13 +106,12 @@ export default function TransitionEdge({ id, sourceX, sourceY,
                     orient="auto-start-reverse"
                 >
                     <path
-                        d="M 2 2 Q 3 5 2 7.5 L 8 5 Z"
+                        d="M 2 2 L 2 8 L 8 5 Z"
                         fill={edgeColor}
                         stroke={edgeColor}
                         strokeWidth="1.5"
-                        strokeLinejoin="round"         
-                        strokeLinecap="round"   
-                        style={{ transition: "fill 0.15s, stroke 0.15s" }}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
                     />
                 </marker>
             </defs>
@@ -147,8 +146,8 @@ export default function TransitionEdge({ id, sourceX, sourceY,
                     }}
                     style={{
                         position: "absolute",
-                        top:  `${labelY}px`,
-                        left:  `${labelX}px`,
+                        top: `${labelY}px`,
+                        left: `${labelX}px`,
                         transform: `translate(-50%, -50%)`,
                         pointerEvents: "all",
                         zIndex: 10

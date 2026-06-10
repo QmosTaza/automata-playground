@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useState } from 'react';
 
 interface AutomataTabsProps {
     project: {
@@ -11,6 +12,7 @@ interface AutomataTabsProps {
     onSelectTab: (id: string) => void;
     onAddTab: () => void;
     onDeleteTab: (id: string, e: React.MouseEvent) => void;
+    setIsHelpOpen: (state: boolean) => void;
 }
 
 function AutomataTabs({
@@ -18,7 +20,10 @@ function AutomataTabs({
     onSelectTab,
     onAddTab,
     onDeleteTab,
+    setIsHelpOpen
 }: AutomataTabsProps) {
+ 
+
     return (
         <div className="flex items-center justify-between bg-stone-50 border-b border-stone-200 px-4 h-11 select-none nodrag w-full">
             {/* Tab Selection List */}
@@ -47,7 +52,7 @@ function AutomataTabs({
                                 <button
                                     onClick={(e) => onDeleteTab(id, e)}
                                     className="text-[10px] font-sans font-normal text-stone-400 hover:text-rose-600 rounded p-0.5 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ml-0.5"
-                                    title="Close Workspace"
+                                    title="Close workspace"
                                 >
                                     ✕
                                 </button>
@@ -59,27 +64,23 @@ function AutomataTabs({
                 {/* Add Tab Button */}
                 <button
                     onClick={onAddTab}
-                    className="p-1.5 text-stone-400 hover:text-amber-800 hover:bg-stone-200/60 rounded-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center ml-1 shrink-0"
-                    title="Open Fresh Workspace"
+                    className="p-1.5 text-stone-400 text-[12px] hover:text-amber-800 hover:bg-stone-200/60 rounded-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center ml-1 shrink-0"
+                    title="Open fresh workspace"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
+                    <i className="nf nf-oct-plus"></i>
                 </button>
             </div>
 
-            {/* Context Right Side Branding */}
+            {/* Context Right Side (Version + Help button) */}
             <div className="hidden sm:flex items-center gap-2">
-                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider select-none">
-                    Workspace Studio
-                </span>
+                <button
+                    onClick={() => setIsHelpOpen(true)}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[12px] font-mono font-bold text-stone-400 border border-transparent hover:bg-stone-200/40 hover:text-stone-600 rounded-lg transition-all cursor-pointer tracking-wide"
+                    title="Open user guide"
+                >
+                    <i className="nf nf-fa-book_open_reader"></i>
+                    <span>Help</span>
+                </button>
                 <span className="h-3 w-[1px] bg-stone-200" />
                 <span className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md tracking-wide uppercase select-none">
                     v1.0.0

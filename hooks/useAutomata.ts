@@ -27,18 +27,22 @@ export function useAutomata(initialFA: FiniteAutomaton) {
         currentFaIdRef.current = initialFA.id;
     }, [initialFA.id]);
 
+    //makes a state an accepting state (or no longer an accepting state)
     const onToggleAccept = useCallback((id: string) => {
         setFa(prev => toggleAcceptState(prev, id));
     }, []);
 
+    //changes state label
     const onRename = useCallback((id: string, newLabel: string) => {
         setFa(prev => renameState(prev, id, newLabel));
     }, []);
 
+    //makes a state a starting state (or no longer a starting state)
     const onToggleStart = useCallback((id: string) => {
         setFa(prev => toggleStartState(prev, id));
     }, []);
 
+    //for editing, groups all transitions from one state to another in an array
     const handleUpdateSymbols = useCallback((edgeId: string, nextSymbols: (string | null)[]) => {
         setFa(prev => {
             const baseTransition = prev.transitions.find(t => t.id === edgeId);
@@ -70,6 +74,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
         });
     }, []);
 
+    //remove transitions from automata when you click + delete or you delete it from inspector tab
     const handleRemoveEdge = useCallback((edgeId: string) => {
         setFa(prev => removeTransition(prev, edgeId));
     }, []);
@@ -142,6 +147,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
         return [];
     }, [fa]);
 
+    // if the validation error is just "Missing transitions", allows you to run the FA
     const canRunSimulation = useMemo(() => {
         return validationErrors.filter(e => e.type !== "MISSING_TRANSITION").length === 0;
     }, [validationErrors]);

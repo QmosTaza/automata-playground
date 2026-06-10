@@ -13,8 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Automata Playground",
-  description: "Simulate different types of automata, from DFA to Turing Machines",
+  title: "The Automata Playground",
+  description: "Simulate different types of finite automata or generate one that implements a regular expression.",
+  icons: {
+        icon: "/logo.svg",
+    },
 };
 
 export default function RootLayout({
@@ -27,6 +30,12 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://www.nerdfonts.com/assets/css/webfont.css"
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

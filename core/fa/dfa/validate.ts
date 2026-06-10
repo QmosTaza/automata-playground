@@ -2,10 +2,17 @@ import { DFA, FiniteAutomaton, Automaton, AutomatonBase, Transition, StateId, Va
 import { validateTransition, countMatchingTransitions, validateStartState, stateExists } from "../validate"
 import { getStateFromId } from "../edit"
 
+//validates whether the DFA is ready to run strings
 export function validateDFA(fa: DFA & AutomatonBase): ValidationResult {
     const errors: ValidationError[] = []
     const automataId = fa.id
 
+    // (see functions in fa/validate.ts)
+
+    // ensures that every transition:
+    //  involves states that exist in the DFA
+    //  involves symbols that belong to the DFA's alphabet (incl lambda)
+    //  no other transitions exist involving those states and symbol
     for (const t of fa.transitions) {
         if (!validateTransition(fa, t)) {
             errors.push({
@@ -16,6 +23,8 @@ export function validateDFA(fa: DFA & AutomatonBase): ValidationResult {
         }
     }
     
+    //ensures that NO non-deterministic transitions exists 
+    //(multiple transitions from the same state and with the same symbol)
     for (const stateId in fa.states) {
         for (const symbol of fa.alphabet) {
             if (countMatchingTransitions(fa, stateId, symbol) > 1) {
@@ -29,6 +38,7 @@ export function validateDFA(fa: DFA & AutomatonBase): ValidationResult {
         }
     }
     
+    // ensures that all accepting states exist in DFA
     for (const stateId of fa.acceptStates) {
         if (!stateExists(fa, stateId)) {
             errors.push({
@@ -38,7 +48,8 @@ export function validateDFA(fa: DFA & AutomatonBase): ValidationResult {
             })
         }
     }
-    
+
+    // ensures that all start states exist and that in DFA there is only one
     if (!validateStartState(fa)) {
         errors.push({
             automataId,

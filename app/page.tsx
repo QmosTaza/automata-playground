@@ -7,6 +7,7 @@ import WorkspaceToolbar from "@/components/WorkspaceToolbar"
 import { generateId } from "@/core/shared"
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Project } from "@/types"
+import HelpGuide from "@/components/HelpGuide"
 
 //machine example
 function createExampleFA(id: string, name: string) {
@@ -59,6 +60,9 @@ const INITIAL_PROJECT_STATE: Project = {
 export default function Home() {
   const [project, setProject] = useLocalStorage<Project>("automata_studio_project_v1", INITIAL_PROJECT_STATE);
 
+  //Help button -> Opens how to use
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+
   // Next.js Hydration Guard
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -92,9 +96,22 @@ export default function Home() {
   // This handles switching tabs, but forces a manual save of the outgoing tab FIRST
   const handleSelectTab = (nextTabId: string) => {
     if (nextTabId === project.activeAutomataId) return;
-    saveActiveCanvasToMemory();
-    setProject(prev => ({ ...prev, activeAutomataId: nextTabId }));
-  }
+    
+    const oldTabId = project.activeAutomataId;
+
+    if (canvasSaveRef.current) {
+      const latestFa = canvasSaveRef.current();
+
+      setProject(prev => ({
+        ...prev,
+        automata: {
+          ...prev.automata,
+          [oldTabId]: latestFa
+        },
+        activeAutomataId: nextTabId
+      }));
+    }
+  };
 
   //ADD
   const handleAddTab = () => {
@@ -170,7 +187,7 @@ export default function Home() {
   const handleExportProject = () => {
     // Get the absolute newest data directly from the canvas execution ref right now
     let latestAutomataCollection = project.automata;
-    
+
     if (canvasSaveRef.current) {
       const latestFaData = canvasSaveRef.current();
       if (latestFaData && latestFaData.id) {
@@ -207,9 +224,9 @@ export default function Home() {
     fileReader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        
+
         if (parsed && parsed.activeAutomataId && Array.isArray(parsed.tabsOrder) && parsed.automata) {
-          
+
           // Clear any canvas refs to prevent outgoing components from firing uncommitted saves
           if (canvasSaveRef.current) {
             canvasSaveRef.current = null;
@@ -217,7 +234,7 @@ export default function Home() {
 
           // Commit the imported data directly to storage & state
           setProject(parsed);
-          
+
           // Force a micro-render buffer sequence to let React Flow unmount safely
           alert("Project imported successfully! :)");
         } else {
@@ -227,9 +244,9 @@ export default function Home() {
         alert("Failed to parse JSON file structure cleanly.");
       }
     };
-    
+
     fileReader.readAsText(file);
-    
+
     // Clear input value so selecting the same file back-to-back works
     e.target.value = "";
   };
@@ -255,7 +272,7 @@ export default function Home() {
   return (
     <main className="w-screen h-screen flex flex-col bg-stone-50 overflow-hidden select-none">
       {/* Utility Bar for Persistence Operations */}
-      <WorkspaceToolbar 
+      <WorkspaceToolbar
         onExport={handleExportProject}
         onImport={handleImportProject}
         onClear={handleClearWorkspace}
@@ -268,17 +285,23 @@ export default function Home() {
         onSelectTab={handleSelectTab}
         onAddTab={handleAddTab}
         onDeleteTab={handleDeleteTab}
+        setIsHelpOpen={setIsHelpOpen}
       />
 
       {/* Main Interactive Studio Canvas Container */}
       <div className="flex-1 w-full relative overflow-hidden">
         <AutomataCanvas
+          key={currentAutomaton.id}
           activeData={currentAutomaton}
           onSave={handleCanvasChange}
           onLiveRename={handleLiveRename}
           saveHookRef={canvasSaveRef}
         />
       </div>
+      <HelpGuide
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+      />
     </main>
   )
 }

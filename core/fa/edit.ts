@@ -2,9 +2,9 @@ import { FiniteAutomaton, DFA, NFA, LambdaNFA, StateId, State, TransitionId, Tra
 import { stateExists, validateTransitionStructure } from "./validate"
 import { generateId } from "../shared"
 
-
+/////////////////////////
 //STATE EDITING
-
+/////////////////////////
 export function createState(fa: FiniteAutomaton, x:number, y:number): State {
     return {
         id: generateId(),
@@ -80,6 +80,7 @@ export function renameState( fa: FiniteAutomaton, stateId: StateId, newLabel: st
     }
 }
 
+//NO REPEATING LABELS
 export function labelExists(fa: FiniteAutomaton, label: string): boolean {
     return Object.values(fa.states).some(
         s => s.label === label
@@ -100,6 +101,8 @@ function selectRandomState(fa: FiniteAutomaton, rejectStates: StateId[]): StateI
     return validStates[index]
 }
 
+//generates a state label 'qX' for a newly created state 
+//if q0 does not exist, q0, otherwise q1,q2...
 function generateStateLabel(fa: FiniteAutomaton): string {
     let i: number = 0
     while (true) {
@@ -114,9 +117,9 @@ function generateStateLabel(fa: FiniteAutomaton): string {
     }
 }
 
-
+/////////////////////////
 //TRANSITION EDITING
-
+/////////////////////////
 export function createTransition(from: StateId, to: StateId, symbol: string | null | undefined): Transition {
     return {
         id: generateId(),
@@ -164,9 +167,9 @@ export function updateTransition(fa: FiniteAutomaton, transition: Transition): F
     }
 }
 
-
+/////////////////////////
 //START STATE EDITING
-
+/////////////////////////
 export function toggleStartState(fa: FiniteAutomaton, stateId: StateId): FiniteAutomaton {
     if (!(stateId in fa.states)) {
         return fa
@@ -182,7 +185,9 @@ export function toggleStartState(fa: FiniteAutomaton, stateId: StateId): FiniteA
     }
 }
 
+/////////////////////////
 // ACCEPT STATES EDITING
+/////////////////////////
 export function isStateAccepting(fa: FiniteAutomaton, stateId: StateId): boolean {
     return fa.acceptStates.includes(stateId)
 }
@@ -220,8 +225,9 @@ export function toggleAcceptState( fa: FiniteAutomaton, stateId: StateId): Finit
         : addAcceptState(fa, stateId)
 }
 
-
+///////////////////
 // ALPHABET EDITING 
+///////////////////
 
 export function addSymbolToAlphabet(fa: FiniteAutomaton, symbol: string): FiniteAutomaton {
     if (fa.alphabet.includes(symbol)) {
@@ -247,7 +253,6 @@ export function removeSymbolFromAlphabet(fa: FiniteAutomaton, symbol: string): F
 }
 
 export function toggleSymbol(fa: FiniteAutomaton,symbol: string): FiniteAutomaton {
-
     return fa.alphabet.includes(symbol)
         ? removeSymbolFromAlphabet(fa, symbol)
         : addSymbolToAlphabet(fa, symbol)
@@ -260,7 +265,7 @@ export function cleanSymbol (input: string) : string | null{
     return trimmed === "" ? null : trimmed; // space = λ
 };
 
-//OTHERS
+//IDENTIFYING STATES/TRANSITIONS
 export function getStateFromId (fa: FiniteAutomaton, id: StateId | undefined) : State | undefined{
     if (!id) return undefined
     return fa.states[id]
@@ -277,6 +282,7 @@ export function getTransitionFromId (fa: FiniteAutomaton, id: TransitionId | und
     )
 }
 
+//Change the name of the machine
 export function renameAutomaton<T extends FiniteAutomaton>(fa: T, newName: string): T {
     return {
         ...fa,
@@ -286,23 +292,27 @@ export function renameAutomaton<T extends FiniteAutomaton>(fa: T, newName: strin
 
 // CONNECTION RELATED FUNCTIONS
 
+//all transitions that come from a state
 export function getTransitionsFromState(fa: DFA | NFA | LambdaNFA, currentState: StateId): Transition[] {
     return fa.transitions.filter(
         t => t.from === currentState
     )
 }
 
+//all transitions that lead to a state
 export function getTransitionsToState(fa: DFA | NFA | LambdaNFA, currentState: StateId): Transition[] {
     return fa.transitions.filter(
         t => t.to === currentState
     )
 }
 
+//gets the ID for the state that you can reach from a given state with a given symbol
 export function getTargetStateDFA(fa: FiniteAutomaton, fromId: StateId, symbol: string): StateId | null {
     const transition = fa.transitions.find(t => t.from === fromId && t.symbol === symbol);
     return transition ? transition.to : null;
 }
 
+//gets the IDS for all states you can reach from a given state with a given symbol
 export function getTargetStatesNFA(fa: FiniteAutomaton, fromId: StateId, symbol: string): Set<StateId> {
     const targetStates = new Set<StateId>();
     for (const t of fa.transitions) {
@@ -313,6 +323,7 @@ export function getTargetStatesNFA(fa: FiniteAutomaton, fromId: StateId, symbol:
     return targetStates
 }
 
+//gets the LABELS for all states you can reach from a given state with a given symbol
 export function getTargetStatesNFALabels(fa: FiniteAutomaton, fromId: StateId, symbol: string): Set<string> {
     const targetStates = new Set<StateId>();
     for (const t of fa.transitions) {
@@ -323,7 +334,7 @@ export function getTargetStatesNFALabels(fa: FiniteAutomaton, fromId: StateId, s
     return targetStates
 }
 
-
+//get all states you can reach with one transition from any given state
 export function getDirectlyConnectedStates(fa: FiniteAutomaton, originId: StateId): Set<StateId> {
     const transitions = getTransitionsFromState(fa, originId)
     const directlyConnectedStates: Set<StateId> = new Set
@@ -358,6 +369,7 @@ export function stateIsAccessible(fa:FiniteAutomaton, originId: StateId, destina
     return false;
 }
 
+//state cannot be reached by any starting states
 export function stateIsUnreachable(fa:FiniteAutomaton, stateId: StateId) : boolean {
     for (const startState of fa.startStates) {
         if (stateIsAccessible(fa,startState,stateId)) {return false}
@@ -365,7 +377,7 @@ export function stateIsUnreachable(fa:FiniteAutomaton, stateId: StateId) : boole
     return true
 }
 
-
+// State is not accepting and does not lead to an accepting state either
 export function stateIsSink(fa:FiniteAutomaton, stateId:StateId) : boolean {
     if (isStateAccepting(fa, stateId) || stateIsUnreachable(fa, stateId)) { return false }
     for (const acceptedState of fa.acceptStates) {
@@ -375,8 +387,9 @@ export function stateIsSink(fa:FiniteAutomaton, stateId:StateId) : boolean {
 }
 
 
-// LAYOUT - RENAMING FUNCTION
-
+// LAYOUT + RENAMING FUNCTION 
+// (makes the layout a little more decent and renames states so labels dont become huge)
+// useful for DFA <- NFA <- LambdaNFA <-> Regex conversions
 export function applyNaiveLayout(automaton: FiniteAutomaton): FiniteAutomaton {
     const states = { ...automaton.states };
     const stateIds = Object.keys(states);

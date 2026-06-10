@@ -1,10 +1,12 @@
 import { FiniteAutomaton, Automaton, StateId } from "@/types";
 import { runDFA, runNFA, runLambdaNFA } from "../fa";
 
+//generates a unique id, useful for states, transitions ...
 export function generateId(): string {
     return crypto.randomUUID()
 }
 
+//generates the first 10 words (or more or less) accepted by an automaton
 export function generateShortlexWords(fa: FiniteAutomaton, limit: number = 10): string[] {
     const validWords: string[] = [];
     const seenWords = new Set<string>();
@@ -76,7 +78,7 @@ export function generateShortlexWords(fa: FiniteAutomaton, limit: number = 10): 
     });
 }
 
-
+//return whether a string is accepted or not by the automata (useful for running bulks)
 export function evaluateString(a: Automaton, str: string): boolean {
     switch (a.kind) {
         case "dfa":
