@@ -2,7 +2,7 @@ import { FiniteAutomaton, State, StateId, Transition, Regex, ThompsonGraph } fro
 import { generateId } from "@/core/shared";
 import { applyNaiveLayout, stateIsSink, stateIsUnreachable } from "..";
 import { convertLambdaNFAtoDFA, minimizeDFA, convertNFAtoDFA } from "..";
-import { parseRegex } from "./fromFA";
+import { parseRegex } from "./utils";
 
 // REGEX TO NFA
 export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {

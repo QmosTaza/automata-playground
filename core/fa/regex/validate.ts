@@ -1,4 +1,4 @@
-import { parseRegex } from "./fromFA";
+import { parseRegex } from "./utils";
 import { ValidationResult, AutomatonId } from "@/types";
 
 

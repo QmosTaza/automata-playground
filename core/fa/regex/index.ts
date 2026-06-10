@@ -1,3 +1,5 @@
-export * from "./fromFA"
 export * from "./toFA"
 export * from "./validate"
+export * from "./simplify"
+export * from "./utils"
+export * from "./fromFARijk"
