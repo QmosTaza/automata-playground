@@ -112,7 +112,7 @@ export function getLambdaClosure(automaton: LambdaNFA, startStateId: string): Se
             t.symbol === "λ" || 
             t.symbol === "λ" ||
             String(t.symbol).toLowerCase() === "lambda" ||
-            String(t.symbol).toLowerCase() === "epsilon";
+            String(t.symbol).toLowerCase() === "lambda";
 
         if (isLambda) {
             if (!lambdaMap.has(t.from)) lambdaMap.set(t.from, []);

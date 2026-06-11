@@ -47,10 +47,10 @@ export function generateShortlexWords(fa: FiniteAutomaton, limit: number = 10): 
             }
         }
 
-        const epsilonTransitions = fa.transitions.filter(
+        const lambdaTransitions = fa.transitions.filter(
             t => t.from === currId && (t.symbol === null || t.symbol === "λ" || t.symbol === "λ")
         );
-        for (const t of epsilonTransitions) {
+        for (const t of lambdaTransitions) {
             const cacheKey = `${t.to}|${path}`;
             if (!visitedStatePaths.has(cacheKey)) {
                 visitedStatePaths.add(cacheKey);

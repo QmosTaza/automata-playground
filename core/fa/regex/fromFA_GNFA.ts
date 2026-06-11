@@ -46,19 +46,19 @@ function initGNFA(fa: FiniteAutomaton): GNFA {
 
     // S → start
     for (const s of fa.startStates) {
-        set(S, s, { type: "epsilon" });
+        set(S, s, { type: "lambda" });
     }
 
     // accept → F
     for (const a of fa.acceptStates) {
-        set(a, F, { type: "epsilon" });
+        set(a, F, { type: "lambda" });
     }
 
     // transitions
     for (const t of fa.transitions) {
         const label: Regex =
             !t.symbol || t.symbol === ""
-                ? { type: "epsilon" }
+                ? { type: "lambda" }
                 : { type: "symbol", value: t.symbol };
 
         const prev: Regex = R.get(t.from)?.get(t.to) ?? { type: "empty" };

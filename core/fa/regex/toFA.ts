@@ -20,7 +20,7 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
                 transitions: []
             }
         }
-        case "epsilon": {
+        case "lambda": {
             const startId = generateId()
             const acceptId = generateId()
             return {
@@ -65,7 +65,7 @@ export function compileRegexToLambdaNFA(ast: Regex): ThompsonGraph {
         case "concat": {
             const children = ast.children;
             if (children.length === 0) {
-                return compileRegexToLambdaNFA({ type: "epsilon" });
+                return compileRegexToLambdaNFA({ type: "lambda" });
             }
 
             let combinedGraph = compileRegexToLambdaNFA(children[0]);

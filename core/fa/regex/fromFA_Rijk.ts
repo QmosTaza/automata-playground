@@ -63,13 +63,13 @@ function calculateRij0(fa: FiniteAutomaton, stateI: StateId, stateJ: StateId): R
     const initialTerms: Regex[] = [];
 
     if (stateI === stateJ) {
-        initialTerms.push({ type: "epsilon" });
+        initialTerms.push({ type: "lambda" });
     }
 
     for (const t of transitions) {
         const symbolLabel = (t.symbol === "" || t.symbol === null || t.symbol === undefined) ? "λ" : t.symbol.trim();
         if (symbolLabel === "λ") {
-            initialTerms.push({ type: "epsilon" });
+            initialTerms.push({ type: "lambda" });
         } else if (symbolLabel === "∅") {
             initialTerms.push({ type: "empty" });
         } else {

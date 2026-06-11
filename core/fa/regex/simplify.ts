@@ -83,11 +83,11 @@ function simplifyConcat(r: Regex): Regex {
     }
 
     //AλB -> AB
-    children = children.filter(c => c.type !== "epsilon");
+    children = children.filter(c => c.type !== "lambda");
 
     //λλλ -> λ
     if (children.length === 0) {
-        return { type: "epsilon" };
+        return { type: "lambda" };
     }
 
     //λA -> A
@@ -113,11 +113,11 @@ function simplifyConcat(r: Regex): Regex {
         return children[0];
     }
 
-    //A(A*) -> A*
+    //redundant stars
     for (let i = 0; i < children.length - 1; i++) {
         const a = children[i];
         const b = children[i + 1];
-
+        //A(A*) -> A*
         if (
             b.type === "star" &&
             keyRegex(a) === keyRegex(b.child)
@@ -133,7 +133,35 @@ function simplifyConcat(r: Regex): Regex {
             children.splice(i + 1, 1);
             i--;
         }
+
+        // A*(A + B)* -> (A + B)* since A is in union
+        // includes similar constructions
+        if (a.type === "star" && b.type === "star") {
+            const keysA = getStarElements(a);
+            const keysB = getStarElements(b);
+
+            // If all elements of A are in B, B absorbs A
+            const aSubsetOfB = [...keysA].every(k => keysB.has(k));
+            if (aSubsetOfB) {
+                children.splice(i, 1);
+                i--;
+                continue;
+            }
+
+            // Viceversa
+            const bSubsetOfA = [...keysB].every(k => keysA.has(k));
+            if (bSubsetOfA) {
+                children.splice(i + 1, 1);
+                i--;
+                continue;
+            }
+        }
     }
+
+    if (children.length === 0) {
+        return { type: "lambda" };
+    }
+
     if (children.length === 1) {
         return children[0];
     }
@@ -145,19 +173,51 @@ function simplifyConcat(r: Regex): Regex {
 }
 
 
+
+
 function simplifyUnion(r: Regex): Regex {
     if (r.type !== "union") return r;
 
     let children: Regex[] = [];
 
     //flatten so (a + b) + c -> a + b + c
+    let flattened: Regex[] = [];
     for (const child of r.children) {
         if (child.type === "union") {
-            children.push(...child.children);
+            flattened.push(...child.children);
         } else {
-            children.push(child);
+            flattened.push(child);
         }
     }
+    children = flattened;
+
+    // detect (a* + a*b* + a*b*c*) -> a*b*c*
+    children = children.filter((current, _, self) => {
+        return !self.some(other => {
+            if (other === current) return false;
+
+            const currentArr = asConcatArray(current);
+            const otherArr = asConcatArray(other);
+
+            const currentElements = currentArr.map(c => c.type === "star" ? keyRegex(c.child) : keyRegex(c));
+            const otherElements = otherArr.map(c => c.type === "star" ? keyRegex(c.child) : keyRegex(c));
+
+            let otherIdx = 0;
+            const isSubsequence = currentElements.every(el => {
+                while (otherIdx < otherElements.length && otherElements[otherIdx] !== el) {
+                    otherIdx++;
+                }
+                return otherIdx < otherElements.length;
+            });
+
+            if (!isSubsequence) return false;
+
+            const extraElements = otherArr.filter(c => !currentArr.some(curr => keyRegex(curr) === keyRegex(c)));
+            const extrasAreOptional = extraElements.every(c => c.type === "star");
+
+            return extrasAreOptional;
+        });
+    });
 
     //A + ∅ + B -> A + B
     children = children.filter(c => c.type !== "empty");
@@ -195,15 +255,15 @@ function simplifyUnion(r: Regex): Regex {
     }
 
     //A* + λ = A*
-    const hasEpsilon =
-        children.some(c => c.type === "epsilon");
-    if (hasEpsilon) {
+    const hasLambda =
+        children.some(c => c.type === "lambda");
+    if (hasLambda) {
         const hasStar = children.find(
             c => c.type === "star"
         );
         if (hasStar) {
             children = children.filter(
-                c => c.type !== "epsilon"
+                c => c.type !== "lambda"
             );
         }
     }
@@ -219,13 +279,15 @@ function simplifyUnion(r: Regex): Regex {
     return factored;
 }
 
+
+
 function simplifyStar(r: Regex): Regex {
     if (r.type !== "star") return r;
 
     //∅* = λ ; λ* = λ
-    if (r.child.type === "empty" || r.child.type === "epsilon") {
+    if (r.child.type === "empty" || r.child.type === "lambda") {
         return {
-            type: "epsilon"
+            type: "lambda"
         };
     }
 
@@ -238,25 +300,93 @@ function simplifyStar(r: Regex): Regex {
     }
 
     //(A + λ)* = A*
+    //(A* + B)* = (A+B)* 
     if (r.child.type === "union") {
-        const withoutEpsilon =
-            r.child.children.filter(c => c.type !== "epsilon");
+        const cleaned = r.child.children
+            .filter(c => c.type !== "lambda")
+            .map(c => c.type === "star" ? c.child : c);
+
+        const deduped = deduplicate(cleaned);
+
+        if (deduped.length === 0) {
+            return { type: "lambda" };
+        }
+
+        if (deduped.length === 1) {
+            return { type: "star", child: deduped[0] };
+        }
+
+        if (deduped.length === 2) {
+            const [c1, c2] = deduped;
+
+            // (A + B A) -> B*A*
+            if (c2.type === "concat" && c2.children.length > 1) {
+                const lastChild = c2.children[c2.children.length - 1];
+                if (keyRegex(lastChild) === keyRegex(c1)) {
+                    const baseB = c2.children.slice(0, -1);
+                    const rB = baseB.length === 1 ? baseB[0] : { type: "concat" as const, children: baseB };
+
+                    return simplifyRegex({
+                        type: "concat" as const,
+                        children: [
+                            { type: "star" as const, child: rB },
+                            { type: "star" as const, child: c1 }
+                        ]
+                    } as Regex);
+                }
+            }
+
+            // (A + A B) -> A*B*
+            if (c2.type === "concat" && c2.children.length > 1) {
+                const firstChild = c2.children[0];
+                if (keyRegex(firstChild) === keyRegex(c1)) {
+                    const baseB = c2.children.slice(1);
+                    const rB = baseB.length === 1 ? baseB[0] : { type: "concat" as const, children: baseB };
+
+                    return simplifyRegex({
+                        type: "concat" as const,
+                        children: [
+                            { type: "star" as const, child: c1 },
+                            { type: "star" as const, child: rB }
+                        ]
+                    } as Regex);
+                }
+            }
+        }
+
         return {
             type: "star",
-            child:
-                withoutEpsilon.length === 1
-                    ? withoutEpsilon[0]
-                    : {
-                        type: "union",
-                        children: withoutEpsilon
-                    }
+            child: { type: "union", children: deduped }
         };
+    }
+
+    //(A*B*)* -> (A+B)*
+    if (r.child.type === "concat") {
+        const allChildrenAreStars = r.child.children.every(c => c.type === "star");
+        if (allChildrenAreStars) {
+            return {
+                type: "star",
+                child: {
+                    type: "union",
+                    children: r.child.children.map(c => (c as any).child)
+                }
+            };
+        }
     }
 
     return {
         type: "star",
         child: r.child
     }
+}
+
+// Helper for base components in a star (used to eliminate redundant stars in concat)
+function getStarElements(r: Regex): Set<string> {
+    if (r.type !== "star") return new Set();
+    if (r.child.type === "union") {
+        return new Set(r.child.children.map(c => keyRegex(c)));
+    }
+    return new Set([keyRegex(r.child)]);
 }
 
 
@@ -266,13 +396,23 @@ function simplifyStar(r: Regex): Regex {
 
 function factorUnion(children: Regex[]): Regex {
     //nothing to factor
-    if (children.length <= 1) {
-        return children[0];
+    if (children.length === 0) return { type: "empty" };
+    if (children.length === 1) return children[0];
+
+    //separate λs
+    const hasLambda = children.some(c => c.type === "lambda");
+    const nonLambdaChildren = children.filter(c => c.type !== "lambda");
+
+    if (nonLambdaChildren.length === 0) {
+        return { type: "lambda" };
+    }
+    if (nonLambdaChildren.length === 1 && !hasLambda) {
+        return nonLambdaChildren[0];
     }
 
     //pay attention to the multiple concatenation we may be summing up
     //like ab + ac or ba + ca
-    const paths = children.map(c =>
+    const paths = nonLambdaChildren.map(c =>
         asConcatArray(c)
     );
 
@@ -282,10 +422,14 @@ function factorUnion(children: Regex[]): Regex {
     //ab + ac = a(b+c)
     if (prefix.length > 0 && prefix.length < paths[0].length) {
         const remainders = paths.map(p => {
-            const tail = p.slice(prefix.length);
-
+            const tail = p.slice(prefix.length)
             return buildConcat(tail)
         });
+
+        //inject λs
+        if (hasLambda) {
+            remainders.push({ type: "lambda" });
+        }
 
         return simplifyRegex({
             type: "concat",
@@ -306,9 +450,13 @@ function factorUnion(children: Regex[]): Regex {
     if (suffix.length > 0 && suffix.length < paths[0].length) {
         const remainders = paths.map(p => {
             const head = p.slice(0, p.length - suffix.length);
-
             return buildConcat(head)
         });
+
+        //inject λs
+        if (hasLambda) {
+            remainders.push({ type: "lambda" });
+        }
 
         return simplifyRegex({
             type: "concat",
@@ -389,7 +537,7 @@ function asConcatArray(r: Regex): Regex[] {
 }
 
 function buildConcat(parts: Regex[]): Regex {
-    if (parts.length === 0) return { type: "epsilon" };
+    if (parts.length === 0) return { type: "lambda" };
     if (parts.length === 1) return parts[0];
 
     return {

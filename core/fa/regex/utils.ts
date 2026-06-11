@@ -9,7 +9,7 @@ export function keyRegex(r: Regex): string {
         case "empty":
             return "∅";
 
-        case "epsilon":
+        case "lambda":
             return "λ";
 
         case "symbol":
@@ -30,7 +30,7 @@ export function printRegex(r: Regex): string {
     switch (r.type) {
         case "empty":
             return "∅";
-        case "epsilon":
+        case "lambda":
             return "λ";
         case "symbol":
             return r.value;
@@ -76,7 +76,7 @@ export function parseRegex(input: string): Regex {
     function parseConcat(): Regex {
         const terms: Regex[] = [];
         while (pos < s.length && peek() !== ")" && peek() !== "+") { terms.push(parseStar()); }
-        if (terms.length === 0) return { type: "epsilon" };
+        if (terms.length === 0) return { type: "lambda" };
         return terms.length === 1 ? terms[0] : { type: "concat", children: terms };
     }
 
@@ -90,7 +90,7 @@ export function parseRegex(input: string): Regex {
         const ch = peek();
         if (!ch) throw new Error("Unexpected end of regex");
         if (ch === "(") { consume("("); const expr = parseUnion(); consume(")"); return expr; }
-        if (ch === "λ") { consume(); return { type: "epsilon" }; }
+        if (ch === "λ") { consume(); return { type: "lambda" }; }
         if (ch === "∅") { consume(); return { type: "empty" }; }
         consume(); return { type: "symbol", value: ch };
     }

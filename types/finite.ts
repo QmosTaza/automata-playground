@@ -43,7 +43,7 @@ export interface ThompsonGraph {
 }
 
 export type Regex = 
-    | { type: 'epsilon' }
+    | { type: 'lambda' }
     | { type: 'empty' }
     | { type: 'symbol', value: string }
     | { type: 'star', child: Regex }
