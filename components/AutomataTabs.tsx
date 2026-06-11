@@ -75,7 +75,7 @@ function AutomataTabs({
             <div className="hidden sm:flex items-center gap-2">
                 <button
                     onClick={() => setIsHelpOpen(true)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[12px] font-mono font-bold text-stone-400 border border-transparent hover:bg-stone-200/40 hover:text-stone-600 rounded-lg transition-all cursor-pointer tracking-wide"
+                    className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-mono font-bold text-stone-400 border border-transparent hover:bg-stone-200/40 hover:text-stone-600 rounded-lg transition-all cursor-pointer tracking-wide"
                     title="Open user guide"
                 >
                     <i className="nf nf-fa-book_open_reader"></i>

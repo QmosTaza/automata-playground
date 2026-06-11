@@ -10,7 +10,7 @@ export function simplifyRegex(r: Regex): Regex {
         if (keyRegex(next) === keyRegex(current)) {
             return next;
         }
-
+        console.log("Paso intermedio:", keyRegex(next));
         current = next;
     }
 }
@@ -192,12 +192,16 @@ function simplifyUnion(r: Regex): Regex {
     children = flattened;
 
     // detect (a* + a*b* + a*b*c*) -> a*b*c*
+    /*
     children = children.filter((current, _, self) => {
         return !self.some(other => {
             if (other === current) return false;
 
             const currentArr = asConcatArray(current);
             const otherArr = asConcatArray(other);
+
+            const hasLiteralSymbols = currentArr.some(c => c.type !== "star" && c.type !== "lambda");
+            if (hasLiteralSymbols) return false;
 
             const currentElements = currentArr.map(c => c.type === "star" ? keyRegex(c.child) : keyRegex(c));
             const otherElements = otherArr.map(c => c.type === "star" ? keyRegex(c.child) : keyRegex(c));
@@ -218,6 +222,7 @@ function simplifyUnion(r: Regex): Regex {
             return extrasAreOptional;
         });
     });
+    */
 
     //A + ∅ + B -> A + B
     children = children.filter(c => c.type !== "empty");
@@ -301,6 +306,7 @@ function simplifyStar(r: Regex): Regex {
 
     //(A + λ)* = A*
     //(A* + B)* = (A+B)* 
+    /*
     if (r.child.type === "union") {
         const cleaned = r.child.children
             .filter(c => c.type !== "lambda")
@@ -316,6 +322,7 @@ function simplifyStar(r: Regex): Regex {
             return { type: "star", child: deduped[0] };
         }
 
+        /*
         if (deduped.length === 2) {
             const [c1, c2] = deduped;
 
@@ -353,12 +360,14 @@ function simplifyStar(r: Regex): Regex {
                 }
             }
         }
+        
 
         return {
             type: "star",
             child: { type: "union", children: deduped }
         };
     }
+    */
 
     //(A*B*)* -> (A+B)*
     if (r.child.type === "concat") {

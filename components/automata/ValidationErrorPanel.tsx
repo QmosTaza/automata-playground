@@ -31,11 +31,7 @@ export default function ValidationErrorPanel({ errors, a }: ValidationErrorPanel
                 className={`flex items-center justify-between p-3 cursor-pointer group transition-colors rounded-t-xl ${isCollapsed ? 'rounded-b-xl' : ''}`}
             >
                 <div className="flex items-center gap-2 mb-2 font-bold">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
+                    <i className="nf nf-cod-error"></i>
                     <span>
                         {isCritical
                             ? `Automata Errors (${errors.length})`
@@ -44,20 +40,10 @@ export default function ValidationErrorPanel({ errors, a }: ValidationErrorPanel
                     </span>
                 </div>
                 <button
-                    className={`p-1 rounded-xl transition-all border border-transparent bg-white group-hover:bg-amber-100/70 text-red-700/70 transition-colors`}
+                    className={`flex items-center gap-2 mb-2 font-bold text-xs p-1 rounded-xl transition-all border border-transparent bg-white group-hover:bg-amber-100/70 text-red-700/70 transition-colors`}
                     title={isCollapsed ? "Expand validation logs" : "Minimize panel overlay"}
                 >
-                    <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 2 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        className={`transition-transform duration-200 ${isCollapsed ? "rotate-180" : ""}`}
-                    >
-                        <polyline points="6 9 12 15 18 9" />
-                    </svg>
+                    {isCollapsed ? <i className="nf nf-md-chevron_up"></i> : <i className="nf nf-md-chevron_down"></i> }
                 </button>
             </div>
             {!isCollapsed && (
