@@ -27,17 +27,18 @@ interface AutomataCanvasProps {
     onSave: (updatedFa: any) => void;
     onLiveRename?: (newName: string) => void;
     saveHookRef: React.MutableRefObject<(() => any) | null>;
+    scheduleSave: () => void;
 }
 
-export default function AutomataCanvas({ activeData, onSave, onLiveRename, saveHookRef }: AutomataCanvasProps) {
+export default function AutomataCanvas({ activeData, onSave, onLiveRename, saveHookRef, scheduleSave }: AutomataCanvasProps) {
     return (
         <ReactFlowProvider>
-            <AutomataCanvasContent activeData={activeData} onSave={onSave} onLiveRename={onLiveRename} saveHookRef={saveHookRef} />
+            <AutomataCanvasContent activeData={activeData} onSave={onSave} onLiveRename={onLiveRename} saveHookRef={saveHookRef} scheduleSave={scheduleSave} />
         </ReactFlowProvider>
     );
 }
 
-function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef }: AutomataCanvasProps) {
+function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef, scheduleSave }: AutomataCanvasProps) {
 
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
@@ -51,7 +52,7 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef }
         onNodesChange, onEdgesChange, onNodeDragStop,
         validationErrors, canRunSimulation,
         activeStateId, setActiveStateId
-    } = useAutomata(activeData);
+    } = useAutomata(activeData, onSave);
 
     // mutable reference of the current FA data updating
     const currentFaRef = useRef(fa);
@@ -71,30 +72,37 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef }
                 saveHookRef.current = null;
             }
         };
-    }, [saveHookRef]);
-
-    // Keeps edits fast and local.
-    const updateWorkspace = useCallback((nextFaOrUpdater: any) => {
-        setFa((prev: any) => {
-            return typeof nextFaOrUpdater === 'function' ? nextFaOrUpdater(prev) : nextFaOrUpdater;
-        });
-    }, [setFa]);
+    }, [saveHookRef, fa]);
 
     // Swaps out the entire environment dataset when clicking a different tab
-    const [isSyncing, setIsSyncing] = useState(false);
+    const isSyncing = useRef(false);
 
     useEffect(() => {
         if (activeData && activeData.id !== fa.id) {
-            setIsSyncing(true);
+            isSyncing.current = true
             setFa(activeData);
             setSimulationResults(null);
             setActiveStateId(null);
 
             // Use a short timeout to unlock, allowing ReactFlow to settle
-            const timer = setTimeout(() => setIsSyncing(false), 100);
+            const timer = setTimeout(() => isSyncing.current = false, 100);
             return () => clearTimeout(timer);
         }
     }, [activeData?.id]);
+
+
+    // Keeps edits fast and local.
+    const updateWorkspace = useCallback((nextFaOrUpdater: any) => {
+        setFa((prev: any) => {
+            const nextFa = typeof nextFaOrUpdater === 'function' ? nextFaOrUpdater(prev) : nextFaOrUpdater;
+            currentFaRef.current = nextFa;
+            if (!isSyncing.current) {
+                onSave?.(nextFa);
+                scheduleSave();
+            }
+            return nextFa;
+        });
+    }, [setFa, onSave]);
 
     //No compilation during node movement or simple clicks
     const [debouncedRegex, setDebouncedRegex] = useState("");
@@ -222,6 +230,8 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef }
             }
         }
     }, [fa, setActiveStateId]);
+
+
 
     return (
         <div className="w-full h-full bg-stone-100 relative">

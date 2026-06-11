@@ -10,11 +10,12 @@ export function convertAutomatonToRegex(fa: FiniteAutomaton): string {
     const g = initGNFA(fa);
 
     //Determine optimal order of elimination with a good old heuristic
-    const order = pickEliminationOrder(g);
+    while (g.states.length > 2) { //until only S and F remain
+        const order = pickEliminationOrder(g);
 
-    //remove states
-    for (const k of order) {
-        eliminateState(g, k);
+        //remove states
+        const bestState = order[0];
+        eliminateState(g, bestState);
     }
 
     //extract the last transition s -> k (= regex)
@@ -102,7 +103,7 @@ function eliminateState(g: GNFA, k: string) {
             };
 
             //unify with old path i->j
-            const updated = simplifyRegex({
+            const updated: Regex = simplifyRegex({
                 type: "union",
                 children: [rij, loop]
             });
@@ -131,7 +132,7 @@ function pickEliminationOrder(g: GNFA): string[] {
 
         for (const other of g.states) {
             if (other === state) continue;
-            
+
             //count real edges (non empty)
             if (g.R.get(other)?.get(state)?.type !== "empty") inDegree++;
             if (g.R.get(state)?.get(other)?.type !== "empty") outDegree++;
@@ -144,3 +145,4 @@ function pickEliminationOrder(g: GNFA): string[] {
     // sort from less to more weight 
     return candidates.sort((a, b) => getWeight(a) - getWeight(b));
 }
+

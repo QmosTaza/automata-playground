@@ -11,8 +11,8 @@ import HelpGuide from "@/components/HelpGuide"
 
 //machine example
 function createExampleFA(id: string, name: string) {
-  const q0Id = generateId();
-  const q1Id = generateId();
+  const q0Id = `${id}-q0`;
+  const q1Id = `${id}-q1`;
 
   return {
     id: id,
@@ -24,9 +24,9 @@ function createExampleFA(id: string, name: string) {
     },
     alphabet: ["a", "b"],
     transitions: [
-      { id: generateId(), from: q0Id, to: q1Id, symbol: "a" },
-      { id: generateId(), from: q0Id, to: q1Id, symbol: "b" },
-      { id: generateId(), from: q1Id, to: q1Id, symbol: "a" }
+      { id: `${id}-t0`, from: q0Id, to: q1Id, symbol: "a" },
+      { id: `${id}-t1`, from: q0Id, to: q1Id, symbol: "b" },
+      { id: `${id}-t2`, from: q1Id, to: q1Id, symbol: "a" }
     ],
     startStates: [q0Id],
     acceptStates: [q1Id],
@@ -59,6 +59,8 @@ const INITIAL_PROJECT_STATE: Project = {
 
 export default function Home() {
   const [project, setProject] = useLocalStorage<Project>("automata_studio_project_v1", INITIAL_PROJECT_STATE);
+  
+  const canvasKey = project.activeAutomataId;
 
   //Help button -> Opens how to use
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -73,44 +75,70 @@ export default function Home() {
   const currentAutomaton = useMemo(() => {
     const activeId = project.activeAutomataId;
     return project.automata[activeId] || project.automata[project.tabsOrder[0]];
-  }, [project]);
+  }, [project.activeAutomataId, project.automata]);
 
   const canvasSaveRef = useRef<(() => any) | null>(null);
 
   // Saves the canvas data to memory
   const saveActiveCanvasToMemory = useCallback(() => {
-    if (canvasSaveRef.current) {
-      const latestFaData = canvasSaveRef.current();
-      if (latestFaData) {
-        setProject(prev => ({
-          ...prev,
-          automata: {
-            ...prev.automata,
-            [prev.activeAutomataId]: latestFaData
-          }
-        }));
+    const latest = canvasSaveRef.current?.();
+    if (!latest) return;
+
+    setProject(prev => ({
+      ...prev,
+      automata: {
+        ...prev.automata,
+        [prev.activeAutomataId]: latest
       }
-    }
+    }));
   }, [setProject]);
 
-  // This handles switching tabs, but forces a manual save of the outgoing tab FIRST
-  const handleSelectTab = (nextTabId: string) => {
-    if (nextTabId === project.activeAutomataId) return;
-    
-    const oldTabId = project.activeAutomataId;
+  /*
+  useEffect(() => {
+    const id = setInterval(saveActiveCanvasToMemory, 500);
+    return () => clearInterval(id);
+  }, [saveActiveCanvasToMemory]);
+  */
 
-    if (canvasSaveRef.current) {
-      const latestFa = canvasSaveRef.current();
+  const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const scheduleSave = useCallback(() => {
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+
+    saveTimeout.current = setTimeout(() => {
+      const latest = canvasSaveRef.current?.();
+      if (!latest) return;
 
       setProject(prev => ({
         ...prev,
         automata: {
           ...prev.automata,
-          [oldTabId]: latestFa
-        },
-        activeAutomataId: nextTabId
+          [prev.activeAutomataId]: latest
+        }
       }));
+    }, 300);
+  }, [setProject]);
+
+  // This handles switching tabs, but forces a manual save of the outgoing tab FIRST
+  const handleSelectTab = (nextTabId: string) => {
+    if (nextTabId === project.activeAutomataId) return;
+    const oldTabId = project.activeAutomataId;
+
+    if (canvasSaveRef.current) {
+      const latestFa = canvasSaveRef.current();
+      if (latestFa) {
+        setProject(prev => ({
+          ...prev,
+          automata: {
+            ...prev.automata,
+            [oldTabId]: latestFa
+          },
+          activeAutomataId: nextTabId
+        }));
+        return;
+      }
     }
+    setProject(prev => ({ ...prev, activeAutomataId: nextTabId }));
   };
 
   //ADD
@@ -153,16 +181,27 @@ export default function Home() {
   }
 
   //CHANGES FROM CANVAS HERE
-  const handleCanvasChange = (updatedFa: any) => {
-    if (!updatedFa) return;
-    setProject(prev => ({
-      ...prev,
-      automata: {
-        ...prev.automata,
-        [prev.activeAutomataId]: updatedFa
+  const handleCanvasChange = useCallback((updatedFa: any) => {
+    if (!updatedFa || !updatedFa.id) return;
+
+    setProject(prev => {
+      if (!prev.tabsOrder.includes(updatedFa.id)) {
+        return prev;
       }
-    }));
-  };
+
+      const nextAutomata = { ...prev.automata };
+      nextAutomata[updatedFa.id] = {
+        ...updatedFa,
+        states: { ...updatedFa.states },
+        transitions: [...updatedFa.transitions]
+      };
+
+      return {
+        ...prev,
+        automata: nextAutomata
+      };
+    });
+  }, [setProject]);
 
   // Updates the tab name with the automaton name
   const handleLiveRename = useCallback((newName: string) => {
@@ -260,11 +299,12 @@ export default function Home() {
   }
 
 
+
   // Prevent Next.js from rendering server components before loading localStorage
   if (!isMounted) {
     return (
-      <div className="w-screen h-screen bg-stone-50 flex items-center justify-center font-mono text-xs text-stone-400">
-        Booting engine studio storage matrix...
+      <div className="w-screen h-screen bg-stone-50 flex items-center justify-center">
+        <div className="animate-pulse text-stone-400">Loading workspace...</div>
       </div>
     );
   }
@@ -291,11 +331,12 @@ export default function Home() {
       {/* Main Interactive Studio Canvas Container */}
       <div className="flex-1 w-full relative overflow-hidden">
         <AutomataCanvas
-          key={currentAutomaton.id}
+          key={canvasKey}
           activeData={currentAutomaton}
           onSave={handleCanvasChange}
           onLiveRename={handleLiveRename}
           saveHookRef={canvasSaveRef}
+          scheduleSave={scheduleSave}
         />
       </div>
       <HelpGuide

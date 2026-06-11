@@ -12,39 +12,72 @@ import { validateDFA, validateCompleteness } from "@/core/fa/dfa/validate";
 import { validateNFA } from "@/core/fa/nfa/validate";
 import { validateLambdaNFA } from "@/core/fa/lambda-nfa/validate";
 
-export function useAutomata(initialFA: FiniteAutomaton) {
+export function useAutomata(initialFA: FiniteAutomaton, onSave?: (updatedFa: FiniteAutomaton) => void) {
     const [fa, setFa] = useState<FiniteAutomaton>(initialFA);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [activeStateId, setActiveStateId] = useState<string | null>(null);
 
-    // Keep an active tab ID tracker to handle data channel cleaning safely
-    const currentFaIdRef = useRef(initialFA.id);
 
-    // Synchronize local state with fresh data payloads when switching tab channels
+    const prevIdRef = useRef<string | null>(null);
     useEffect(() => {
-        setFa(initialFA);
-        currentFaIdRef.current = initialFA.id;
-    }, [initialFA.id]);
+        if (!initialFA?.id) return;
+
+        if (prevIdRef.current !== initialFA.id) {
+            prevIdRef.current = initialFA.id;
+            setFa(initialFA);
+        }
+    }, [initialFA?.id]);
+
+    useEffect(() => {
+        setNodes((currentNodes) => {
+            const nextNodes = faToNodes(fa, onToggleAccept, onRename, onToggleStart, activeStateId);
+
+            if (currentNodes.length === 0) return nextNodes;
+
+            const existingNodesMap = new Map(currentNodes.map(n => [n.id, n]));
+
+            return nextNodes.map(newNode => {
+                const existingNode = existingNodesMap.get(newNode.id);
+                return {
+                    ...newNode,
+                    position: existingNode && existingNode.position.x !== 0 ? existingNode.position : newNode.position,
+                    selected: existingNode?.selected || false,
+                    data: {
+                        ...newNode.data,
+                        isStart: fa.startStates.includes(newNode.id),
+                        accepting: fa.acceptStates.includes(newNode.id),
+                        isActive: activeStateId === newNode.id
+                    }
+                };
+            });
+        });
+
+        setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
+    }, [fa, activeStateId]);
+
+    const updateFa = useCallback((updater: (prev: FiniteAutomaton) => FiniteAutomaton) => {
+        setFa(prev => updater(prev));
+    }, []);
 
     //makes a state an accepting state (or no longer an accepting state)
     const onToggleAccept = useCallback((id: string) => {
-        setFa(prev => toggleAcceptState(prev, id));
-    }, []);
+        updateFa(prev => toggleAcceptState(prev, id));
+    }, [updateFa]);
 
     //changes state label
     const onRename = useCallback((id: string, newLabel: string) => {
-        setFa(prev => renameState(prev, id, newLabel));
-    }, []);
+        updateFa(prev => renameState(prev, id, newLabel));
+    }, [updateFa]);
 
     //makes a state a starting state (or no longer a starting state)
     const onToggleStart = useCallback((id: string) => {
-        setFa(prev => toggleStartState(prev, id));
-    }, []);
+        updateFa(prev => toggleStartState(prev, id));
+    }, [updateFa]);
 
     //for editing, groups all transitions from one state to another in an array
     const handleUpdateSymbols = useCallback((edgeId: string, nextSymbols: (string | null)[]) => {
-        setFa(prev => {
+        updateFa(prev => {
             const baseTransition = prev.transitions.find(t => t.id === edgeId);
             if (!baseTransition) return prev;
 
@@ -72,39 +105,12 @@ export function useAutomata(initialFA: FiniteAutomaton) {
 
             return updatedFa;
         });
-    }, []);
+    }, [updateFa]);
 
     //remove transitions from automata when you click + delete or you delete it from inspector tab
     const handleRemoveEdge = useCallback((edgeId: string) => {
-        setFa(prev => removeTransition(prev, edgeId));
-    }, []);
-
-    // stops React Flow from reprocessing graph visuals on irrelevant renders
-    useEffect(() => {
-        setNodes((currentNodes) => {
-            const nextNodes = faToNodes(fa, onToggleAccept, onRename, onToggleStart, activeStateId);
-
-            // instant lookup index map of our existing canvas nodes
-            const existingNodesMap = new Map(currentNodes.map(n => [n.id, n]));
-
-            // Stitch the metadata matching properties together -> O(n)
-            return nextNodes.map(newNode => {
-                const existingNode = existingNodesMap.get(newNode.id);
-                return {
-                    ...newNode,
-                    position: existingNode?.position || newNode.position,
-                    selected: existingNode?.selected || false,
-                    data: {
-                        ...newNode.data,
-                        isStart: fa.startStates.includes(newNode.id),
-                        accepting: fa.acceptStates.includes(newNode.id),
-                        isActive: activeStateId === newNode.id
-                    }
-                };
-            });
-        });
-        setEdges(faToEdges(fa, handleUpdateSymbols, handleRemoveEdge));
-    }, [fa, activeStateId, onToggleAccept, onRename, onToggleStart, handleUpdateSymbols, handleRemoveEdge]);
+        updateFa(prev => removeTransition(prev, edgeId));
+    }, [updateFa]);
 
     // Keep structural alterations isolated locally
     const onNodesChange = useCallback((changes: any) => {
@@ -117,7 +123,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
 
     // Commit coordinate layout changes ONLY when dragging finishes
     const onNodeDragStop = useCallback((_: any, node: Node) => {
-        setFa(prev => {
+        updateFa((prev: any) => {
             const state = prev.states[node.id];
             if (!state) return prev;
             return {
@@ -128,7 +134,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
                 }
             };
         });
-    }, []);
+    }, [updateFa]);
 
     // stops complex graph validation routines from executing on every frame render
     const validationErrors = useMemo(() => {
@@ -151,6 +157,7 @@ export function useAutomata(initialFA: FiniteAutomaton) {
     const canRunSimulation = useMemo(() => {
         return validationErrors.filter(e => e.type !== "MISSING_TRANSITION").length === 0;
     }, [validationErrors]);
+
 
     return {
         fa,
