@@ -63,7 +63,7 @@ export function runDFA(fa: DFA, input: string): SimulationResult {
 }
 
 //AUX specifically for DFAs, returns the state that the transition with a given symbol points to
-// a function like this already exists in fa/edit.ts but I can't be bothered to change it :)
+// a function like this already exists in fa/edit.ts but let's not risk changing it for now
 function getNextStateDFA(fa: DFA, symbol: string, currentState: StateId): StateId | undefined {
     const transitions: Transition[] = getTransitionsFromState(fa, currentState)
     for (const t of transitions) {

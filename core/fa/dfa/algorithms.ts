@@ -169,6 +169,18 @@ export function minimizeDFA(fa: FiniteAutomaton): FiniteAutomaton {
     };
 }
 
+//Function to convert current DFA to its complement. This is done by swapping the accepting and non-accepting states over a COMPLETE DFA.
+export function complementDFA(fa: FiniteAutomaton): FiniteAutomaton {
+    const completeDFA = makeDFAComplete(fa);
+
+    const newAcceptStates = Object.keys(completeDFA.states).filter(id => !completeDFA.acceptStates.includes(id));
+
+    return {
+        ...completeDFA,
+        acceptStates: newAcceptStates
+    };
+}
+
 //AUX FUNCTION that splits a single group into smaller subgroups based on a specific alphabet symbol.
 // States end up in the same subgroup if their transitions on this symbol land in the exact same target group.
 function refineGroup(fa: FiniteAutomaton, currentGroup: StateId[], allGroups: StateId[][], symbol: string): StateId[][] {

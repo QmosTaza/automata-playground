@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FiniteAutomaton } from "@/types";
-import { makeDFAComplete, minimizeDFA, convertNFAtoDFA, convertLambdaNFAtoDFA, convertLambdaNFAtoNFA, applyNaiveLayout } from "@/core/fa";
+import { makeDFAComplete, minimizeDFA, complementDFA, convertNFAtoDFA, convertLambdaNFAtoDFA, convertLambdaNFAtoNFA, applyNaiveLayout } from "@/core/fa";
 
 interface SimulationControlsProps {
     fa: FiniteAutomaton;
@@ -33,6 +33,11 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
     const handleMinimize = () => {
         const minimizedFa = minimizeDFA(fa);
         onAutomataChange(minimizedFa);
+    };
+
+    const handleComplement = () => {
+        const complementedFa = complementDFA(fa);
+        onAutomataChange(complementedFa);
     };
 
     const handleConvertNFAtoDFA = () => {
@@ -132,6 +137,15 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                     >
                         <i className="nf nf-fa-minimize"></i>
                         <span>Minimize</span>
+                    </button>
+
+                    <button
+                        onClick={handleComplement}
+                        title="Convert the DFA to its complement"
+                        className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                    >
+                        <i className="nf nf-md-invert_colors"></i>
+                        <span>Complement</span>
                     </button>
 
                 </div>
