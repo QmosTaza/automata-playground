@@ -12,7 +12,7 @@ interface InspectorPanelProps {
 }
 
 export default function InspectorPanel({ automaton, onAutomatonChange }: InspectorPanelProps) {
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
     const [activeSection, setActiveSection] = useState<"overview" | "editor" | "regex">("overview");
     const [newSymbol, setNewSymbol] = useState("");
     const [regex, setRegex] = useState("");
