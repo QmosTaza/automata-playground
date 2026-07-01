@@ -72,17 +72,17 @@ function AutomataTabs({
             </div>
 
             {/* Context Right Side (Version + Help button) */}
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 <button
                     onClick={() => setIsHelpOpen(true)}
                     className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-mono font-bold text-stone-400 border border-transparent hover:bg-stone-200/40 hover:text-stone-600 rounded-lg transition-all cursor-pointer tracking-wide"
                     title="Open user guide"
                 >
                     <i className="nf nf-fa-book_open_reader"></i>
-                    <span>Help</span>
+                    <span className="hidden sm:inline">Help</span>
                 </button>
-                <span className="h-3 w-[1px] bg-stone-200" />
-                <span className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md tracking-wide uppercase select-none">
+                <span className="hidden sm:block h-3 w-[1px] bg-stone-200" />
+                <span className="hidden sm:inline-block text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md tracking-wide uppercase select-none">
                     v1.0.0
                 </span>
             </div>

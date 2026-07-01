@@ -67,7 +67,7 @@ export default function WorkspaceToolbar({
                     className={`flex items-center justify-center p-1 rounded-md text-stone-400 hover:bg-stone-200/60 hover:text-stone-600 transition-all cursor-pointer ${isOpen ? "bg-stone-200 text-stone-700" : ""
                         }`}
                 >
-                    <i className={`nf ${isOpen ? "nf-fa-times" : "nf-fa-bars"} text-xs`}></i>
+                    <i className={`nf nf-fa-bars text-xs`}></i>
                 </button>
 
                 {/* DROPDOWN MENU PANEL */}
