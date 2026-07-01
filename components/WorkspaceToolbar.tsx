@@ -44,7 +44,7 @@ export default function WorkspaceToolbar({
             {/* Center App Name */}
             <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none">
                 <span className="text-sm font-bold text-orange-700 uppercase tracking-wider select-none">
-                    The Automata Playground
+                    Park-O-Mata
                 </span>
             </div>
 

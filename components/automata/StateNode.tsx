@@ -1,9 +1,13 @@
 "use client"
 
-import { Handle, Position } from "@xyflow/react"
+import { Handle, Position, useConnection } from "@xyflow/react"
 import { useState, useRef, useEffect } from "react";
 
 export default function StateNode({ id, data, selected }: any) {
+    const connection = useConnection();
+    const isConnecting = !!connection.inProgress;
+    const isSourceOfConnection = connection.fromNode?.id === id;
+
     const handleClassName = `!w-2 !h-2 !bg-amber-100 !border-2
         ${data.accepting ? "!border-orange-700" : "!border-amber-900"}`
 
@@ -82,7 +86,7 @@ export default function StateNode({ id, data, selected }: any) {
                     data.onToggleAccept(id);
                 }
             }}
-            className="relative"
+            className="relative group"
         >
             {data.isStart && (
                 <div className="absolute -top-6 -left-6 pointer-events-none text-amber-600 animate-fade-in z-50 select-none rotate-45">
@@ -96,10 +100,20 @@ export default function StateNode({ id, data, selected }: any) {
             )}
 
             <Handle type="target" position={Position.Left} id="left-target"
-                className={handleClassName} />
+                className={`${handleClassName} transition-all duration-150
+                    ${isConnecting && !isSourceOfConnection 
+                        ? "group-hover:!scale-125 group-hover:!bg-amber-300 group-hover:!border-amber-700" 
+                        : "pointer-events-none"
+                    }
+                `} />
 
             <Handle type="source" position={Position.Right} id="right-source"
-                className={handleClassName} />
+                className={`${handleClassName} transition-all duration-150
+                    ${!isConnecting 
+                        ? "group-hover:!scale-125 group-hover:!bg-amber-300 group-hover:!border-amber-700" 
+                        : "pointer-events-none"
+                    }
+                `} />
 
             <div className={`relative w-16 h-16 rounded-full border-2 text-stone-800 font-semibold flex items-center justify-center select-none cursor-pointer transition-all duration-300
                 ${isEditing
