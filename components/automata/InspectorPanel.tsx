@@ -68,9 +68,9 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
         `}>
             {/* MAIN */}
             <div
-                className={`h-full md:h-[calc(100%-2rem)] my-0 md:my-4 ml-0 md:ml-4 bg-white/98 md:bg-white/95 backdrop-blur-md border-r md:border border-stone-200 shadow-2xl flex flex-col transition-all duration-300 pointer-events-auto overflow-hidden
+                className={`h-[calc(100%-1rem)] my-0 md:my-4 ml-0 md:ml-4 bg-white/98 md:bg-white/95 backdrop-blur-md border-r md:border border-stone-200 shadow-2xl flex flex-col transition-all duration-300 pointer-events-auto overflow-hidden
                     ${isOpen ? "w-full sm:w-80 opacity-100" : "w-0 opacity-0 border-none"}
-                    md:rounded-2xl
+                    rounded-2xl
                 `}
             >
                 {/* HEADER */}
@@ -350,7 +350,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                         />
                                         <button
                                             type="submit"
-                                            className="px-4 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-semibold text-sm rounded-lg shadow-sm transition-all cursor-pointer active:scale-95"
+                                            className="px-4 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-all cursor-pointer active:scale-95"
                                         >
                                             Add
                                         </button>
@@ -537,7 +537,8 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                                     onKeyDown={(e) => {
                                                         e.stopPropagation();
                                                     }}
-                                                    className={`flex-1 px-3 py-1 bg-stone-50 border rounded-lg text-sm text-stone-800 outline-none transition-colors ${isInvalid
+                                                    className={`min-w-0 flex-1 px-3 py-1 bg-stone-50 border rounded-lg text-sm text-stone-800 outline-none transition-colors 
+                                                        ${isInvalid
                                                         ? "border-red-500 focus:border-red-600 bg-red-50/10"
                                                         : "border-stone-300 focus:border-amber-600"
                                                         }`}
@@ -545,7 +546,8 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                                                 <button
                                                     type="submit"
                                                     disabled={!validation.valid}
-                                                    className={`px-4 py-1.5 text-white font-semibold text-xs rounded-lg shadow-sm transition-all whitespace-nowrap mr-1 ${validation.valid
+                                                    className={`sm:shrink-0 px-4 py-1.5 text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-all whitespace-nowrap mr-1 
+                                                        ${validation.valid
                                                         ? "bg-amber-700 hover:bg-amber-800 cursor-pointer active:scale-95"
                                                         : "bg-stone-300 text-stone-500 cursor-not-allowed select-none"
                                                         }`}
@@ -708,8 +710,8 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
             {/* ACORDEÓN YUJUU */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex h-12 md:h-12 w-16 md:w-8 bg-white border border-stone-200 shadow-xl rounded-r-2xl md:rounded-r-xl items-center justify-center text-stone-500 hover:text-amber-700 hover:bg-stone-50 transition-all cursor-pointer pointer-events-auto border-l-0 
-                    ${isOpen ? "ml-0" : "ml-2 md:ml-4"}
+                className={`flex h-12 md:h-12 w-8 md:w-8 bg-white border border-stone-200 shadow-xl rounded-r-2xl md:rounded-r-xl items-center justify-center text-stone-500 hover:text-amber-700 hover:bg-stone-50 transition-all cursor-pointer pointer-events-auto border-l-0 
+                    ${isOpen ? "relative ml-0" : "absolute top-1/2 -translate-y-1/2 ml-2 md:ml-4"}
                 `}
             >
                 <i className={`nf text-xs transition-transform ${isOpen ? "nf-fa-chevron_left" : "nf-fa-chevron_right"}`}></i>

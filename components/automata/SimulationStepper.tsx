@@ -93,11 +93,11 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
                 `}>
                     <div className="flex items-center gap-2">
                         {isAccepted ? (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-white"><polyline points="20 6 9 17 4 12" /></svg>
+                            <i className="nf nf-fa-circle_check text-white text-[10px] md:text-[9px]"></i>
                         ) : (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-white"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                            <i className="nf nf-cod-error text-white text-[10px] md:text-[9px]"></i>
                         )}
-                        <span className="text-white text-[11px] font-bold uppercase tracking-wider select-none">
+                        <span className="text-white text-[11px] md:text-[12px] font-bold uppercase tracking-wider select-none">
                             {currentBranch.error
                                 ? `Simulation Halted: ${currentBranch.error}`
                                 : isAccepted ? "String Accepted by Machine" : "String Rejected (Ends in Non-Accepting State)"
@@ -106,9 +106,9 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-white/90 hover:text-white font-semibold text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg transition-all shadow-sm active:scale-95 cursor-pointer border border-white/10"
+                        className="text-white/90 hover:text-white font-semibold text-xs bg-white/10 hover:bg-white/20 px-2 md:px-3 py-1 rounded-lg transition-all shadow-sm active:scale-95 cursor-pointer border border-white/10"
                     >
-                        Close
+                        ✕
                     </button>
                 </div>
 
@@ -162,24 +162,23 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
                     </div>
 
                     {/* CONTROLLERS */}
-                    <div className="flex items-center justify-between border-t border-stone-100 pt-3.5">
-
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-stone-100 pt-3.5">
                         {/* CURRENT STATES */}
                         <div className="flex flex-col select-none">
                             <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-                                Current Location
+                                Current State
                             </span>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <span
                                     className={`px-3 py-1 text-xs font-mono font-bold rounded-lg shadow-sm border ${isCurrentStateAccepting
-                                            ? "bg-emerald-600 text-white border-emerald-700"
-                                            : "bg-stone-900 text-stone-50 border-stone-950"
+                                        ? "bg-emerald-600 text-white border-emerald-700"
+                                        : "bg-stone-900 text-stone-50 border-stone-950"
                                         }`}
                                 >
                                     {currentStep ? getStateLabelFromId(fa, currentStep.state) : "—"}
                                 </span>
                                 {currentStepIdx === steps.length - 1 && (
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border truncate
                                         ${isAccepted
                                             ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                                             : "bg-stone-100 border-stone-200 text-stone-600"}
@@ -195,27 +194,27 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
                             <button
                                 onClick={handlePrev}
                                 disabled={currentStepIdx === 0}
-                                className={`font-semibold text-xs px-4 py-1.5 rounded-lg transition-all shadow-sm border flex items-center gap-1
+                                className={`flex-1 sm:flex-initial font-semibold text-xs px-4 py-2 sm:py-1.5 rounded-lg transition-all shadow-sm border flex items-center justify-center gap-1
                                     ${currentStepIdx !== 0
                                         ? 'bg-white border-stone-300 text-stone-700 hover:bg-stone-50 cursor-pointer active:scale-95'
                                         : 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'}
-                                `}
+                                    `}
                             >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+                                <i className="nf nf-md-chevron_left text-[10px] md:text-[9px]"></i>
                                 <span>Previous</span>
                             </button>
 
                             <button
                                 onClick={handleNext}
                                 disabled={currentStepIdx === steps.length - 1}
-                                className={`font-semibold text-xs px-5 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-1
+                                className={`flex-1 sm:flex-initial font-semibold text-xs px-5 py-2 sm:py-1.5 rounded-lg transition-all shadow-sm flex items-center justify-center gap-1
                                     ${currentStepIdx === steps.length - 1
                                         ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                                         : 'bg-amber-700 hover:bg-amber-800 text-white cursor-pointer active:scale-95'}
                                 `}
                             >
                                 <span>Next Step</span>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                                <i className="nf nf-md-chevron_right text-[10px] md:text-[9px]"></i>
                             </button>
                         </div>
                     </div>
