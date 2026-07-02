@@ -63,15 +63,18 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
     }, [automaton.id]);
 
     return (
-        <div className="absolute top-0 left-0 h-full z-[90] flex items-center pointer-events-none">
+        <div className={`absolute top-0 left-0 h-full z-[90] flex items-center pointer-events-none transition-all duration-300
+            ${isOpen ? "w-full md:w-auto" : "w-0"}
+        `}>
             {/* MAIN */}
             <div
-                className={`h-[calc(100%-2rem)] my-4 ml-4 bg-white/95 backdrop-blur-md border border-stone-200 shadow-2xl rounded-2xl flex flex-col transition-all duration-300 pointer-events-auto overflow-hidden
-                    ${isOpen ? "w-80 opacity-100" : "w-0 opacity-0 border-none ml-0"}
+                className={`h-full md:h-[calc(100%-2rem)] my-0 md:my-4 ml-0 md:ml-4 bg-white/98 md:bg-white/95 backdrop-blur-md border-r md:border border-stone-200 shadow-2xl flex flex-col transition-all duration-300 pointer-events-auto overflow-hidden
+                    ${isOpen ? "w-full sm:w-80 opacity-100" : "w-0 opacity-0 border-none"}
+                    md:rounded-2xl
                 `}
             >
                 {/* HEADER */}
-                <div className="p-4 border-b border-stone-100 bg-stone-50/50">
+                <div className="p-4 pt-8 sm:pt-4 border-b border-stone-100 bg-stone-50/50">
                     <span className="text-[10px] uppercase tracking-wider font-bold text-stone-400 select-none">
                         Machine Inspector
                     </span>
@@ -120,7 +123,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
                 </div>
 
                 {/* SIDEBAR */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
 
                     {/* OVERVIEW & ANÁLISIS FORMAL */}
                     {activeSection === "overview" && (
@@ -705,9 +708,11 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
             {/* ACORDEÓN YUJUU */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`h-12 w-6 bg-white border border-stone-200 shadow-lg rounded-r-xl flex items-center justify-center text-stone-500 hover:text-amber-700 hover:bg-stone-50 transition-all cursor-pointer pointer-events-auto border-l-0 ${isOpen ? "ml-0" : "ml-4"}`}
+                className={`flex h-12 md:h-12 w-16 md:w-8 bg-white border border-stone-200 shadow-xl rounded-r-2xl md:rounded-r-xl items-center justify-center text-stone-500 hover:text-amber-700 hover:bg-stone-50 transition-all cursor-pointer pointer-events-auto border-l-0 
+                    ${isOpen ? "ml-0" : "ml-2 md:ml-4"}
+                `}
             >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-300 ${isOpen ? "rotate-0" : "rotate-180"}`}><path d="m15 18-6-6 6-6" /></svg>
+                <i className={`nf text-xs transition-transform ${isOpen ? "nf-fa-chevron_left" : "nf-fa-chevron_right"}`}></i>
             </button>
         </div>
     );
