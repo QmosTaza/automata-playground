@@ -21,7 +21,7 @@ export default function ValidationErrorPanel({ errors, a }: ValidationErrorPanel
     return (
         <div
             onClick={() => isCollapsed && setIsCollapsed(false)}
-            className={`absolute z-[100] transition-all duration-300 shadow-xl border backdrop-blur-md pointer-events-auto
+            className={`absolute z-[150] transition-all duration-300 shadow-xl border backdrop-blur-md pointer-events-auto
                 top-4 right-4
                 ${isCollapsed 
                     ? "w-10 h-10 rounded-full flex items-center justify-center p-0 cursor-pointer active:scale-95" 
