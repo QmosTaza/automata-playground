@@ -13,6 +13,7 @@ interface AutomataTabsProps {
     onAddTab: () => void;
     onDeleteTab: (id: string, e: React.MouseEvent) => void;
     setIsHelpOpen: (state: boolean) => void;
+    setIsHelpMobileOpen: (state: boolean) => void;
 }
 
 function AutomataTabs({
@@ -20,9 +21,10 @@ function AutomataTabs({
     onSelectTab,
     onAddTab,
     onDeleteTab,
-    setIsHelpOpen
+    setIsHelpOpen,
+    setIsHelpMobileOpen
 }: AutomataTabsProps) {
- 
+
 
     return (
         <div className="flex items-center justify-between bg-stone-50 border-b border-stone-200 px-4 h-11 select-none nodrag w-full">
@@ -38,11 +40,10 @@ function AutomataTabs({
                         <div
                             key={id}
                             onClick={() => onSelectTab(id)}
-                            className={`group flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-all cursor-pointer whitespace-nowrap select-none tracking-wide ${
-                                isActive
-                                    ? "bg-white text-amber-800 border-stone-200 shadow-sm"
-                                    : "bg-transparent text-stone-400 border-transparent hover:bg-stone-200/60 hover:text-stone-600"
-                            }`}
+                            className={`group flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-all cursor-pointer whitespace-nowrap select-none tracking-wide ${isActive
+                                ? "bg-white text-amber-800 border-stone-200 shadow-sm"
+                                : "bg-transparent text-stone-400 border-transparent hover:bg-stone-200/60 hover:text-stone-600"
+                                }`}
                         >
                             {/* Label reads directly from the active automaton instance name */}
                             <span>{currentTab.name || "Untitled Automaton"}</span>
@@ -74,7 +75,13 @@ function AutomataTabs({
             {/* Context Right Side (Version + Help button) */}
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 <button
-                    onClick={() => setIsHelpOpen(true)}
+                    onClick={() => {
+                        if (window.innerWidth < 640) {
+                            setIsHelpMobileOpen(true);
+                        } else {
+                            setIsHelpOpen(true);
+                        }
+                    }}
                     className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-mono font-bold text-stone-400 border border-transparent hover:bg-stone-200/40 hover:text-stone-600 rounded-lg transition-all cursor-pointer tracking-wide"
                     title="Open user guide"
                 >

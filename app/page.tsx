@@ -8,6 +8,7 @@ import { generateId } from "@/core/shared"
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Project } from "@/types"
 import HelpGuide from "@/components/HelpGuide"
+import HelpGuideMobile from "@/components/HelpGuideMobile"
 
 //machine example
 function createExampleFA(id: string, name: string) {
@@ -64,6 +65,7 @@ export default function Home() {
 
   //Help button -> Opens how to use
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isHelpMobileOpen, setIsHelpMobileOpen] = useState(false);
 
   // Next.js Hydration Guard
   const [isMounted, setIsMounted] = useState(false);
@@ -325,6 +327,7 @@ export default function Home() {
         onAddTab={handleAddTab}
         onDeleteTab={handleDeleteTab}
         setIsHelpOpen={setIsHelpOpen}
+        setIsHelpMobileOpen={setIsHelpMobileOpen}
       />
 
       {/* Main Interactive Studio Canvas Container */}
@@ -343,6 +346,11 @@ export default function Home() {
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
       />
+      <HelpGuideMobile
+        isOpen={isHelpMobileOpen}
+        onClose={() => setIsHelpMobileOpen(false)}
+      />
+
     </main>
   )
 }

@@ -32,7 +32,7 @@ export default function WorkspaceToolbar({
 
 
     return (
-        <div className="relative flex items-center justify-between bg-stone-50 border-b border-stone-200 px-4 h-7 select-none nodrag w-full">
+        <div className="relative flex items-center justify-between bg-stone-50 border-b border-stone-200 px-4 h-7 select-none nodrag w-full z-[100]">    
             {/* DESKTOP Left Actions */}
             <div className="hidden md:flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 {/* Import */}
@@ -72,7 +72,7 @@ export default function WorkspaceToolbar({
 
                 {/* DROPDOWN MENU PANEL */}
                 <div
-                    className={`absolute left-0 top-[26px] min-w-[180px] bg-white border border-stone-200 shadow-lg rounded-md py-1 flex flex-col gap-0.5 transition-all duration-150 transform origin-top-left ${isOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
+                    className={`absolute left-0 top-[26px] min-w-[180px] bg-white border border-stone-200 shadow-xl rounded-md py-1 flex flex-col gap-0.5 transition-all duration-150 transform origin-top-left z-[110] ${isOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
                         }`}
                 >
                     {/* Import */}
@@ -96,7 +96,7 @@ export default function WorkspaceToolbar({
                     {/* Reset Environment */}
                     <button
                         onClick={() => { onClear(); setIsOpen(false); }}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-bold text-rose-500 hover:bg-rose-50 text-left cursor-pointer transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-bold text-amber-600 hover:bg-red-50 hover:text-amber-900 text-left cursor-pointer transition-colors"
                     >
                         <i className="nf nf-md-delete w-4"></i>
                         <span>Reset Environment</span>

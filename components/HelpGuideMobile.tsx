@@ -5,7 +5,7 @@ interface HelpGuideProps {
     onClose: () => void;
 }
 
-export default function HelpGuide({ isOpen, onClose }: HelpGuideProps) {
+export default function HelpGuideMobile({ isOpen, onClose }: HelpGuideProps) {
     if (!isOpen) return null;
 
     return (
@@ -44,12 +44,8 @@ export default function HelpGuide({ isOpen, onClose }: HelpGuideProps) {
 
                         <p>
                             Click anywhere on the empty workspace to create a new state.
-                            To mark a state as accepting, right-click it or press the <i className="nf nf-md-circle_double"></i> button. 
-                            To mark a state as the start state, hold
-                            <kbd className="bg-stone-100 border border-stone-200 px-1 py-0.5 rounded text-[10px] font-mono shadow-sm mx-1">
-                                Alt
-                            </kbd>
-                            while right-clicking or press the <i className="nf nf-fa-circle_right"></i> button.
+                            To mark a state as the start state, select it and press the <i className="nf nf-fa-circle_right"></i> button. To mark a state as
+                            accepting, select it and press the <i className="nf nf-md-circle_double"></i> button.
                         </p>
                     </div>
 
@@ -95,15 +91,7 @@ export default function HelpGuide({ isOpen, onClose }: HelpGuideProps) {
                         </p>
 
                         <p className="mt-2">
-                            To remove a selected state or transition, press
-                            <kbd className="bg-stone-100 border border-stone-200 px-1 py-0.5 rounded text-[10px] font-mono shadow-sm mx-1">
-                                Delete
-                            </kbd>
-                            or
-                            <kbd className="bg-stone-100 border border-stone-200 px-1 py-0.5 rounded text-[10px] font-mono shadow-sm mx-1">
-                                Backspace
-                            </kbd>.
-                            or press the <i className="nf nf-md-delete"></i> button that will appear on the canvas.
+                            To remove a selected state or transition, press the <i className="nf nf-md-delete"></i> button.
                         </p>
                     </div>
 

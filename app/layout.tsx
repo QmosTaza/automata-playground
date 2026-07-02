@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Park-O-Mata: Automata Playground",
+  title: "Park-O-Mata - Automata Playground",
   description: "Simulate different types of finite automata or generate one that implements a regular expression.",
   icons: {
         icon: "/logo.svg",

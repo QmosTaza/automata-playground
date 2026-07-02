@@ -12,7 +12,7 @@ import ValidationErrorPanel from "./ValidationErrorPanel";
 
 import { EDGE_STYLE } from "@/visualizers";
 import { useAutomata } from "@/hooks/useAutomata";
-import { addState, createState, addTransition, createTransition, removeState, removeTransition } from "@/core/fa";
+import { addState, createState, addTransition, createTransition, removeState, removeTransition, toggleAcceptState, toggleStartState } from "@/core/fa";
 import { runDFA, makeDFAComplete, runNFA, runLambdaNFA } from "@/core/fa";
 import { DFA, NFA, LambdaNFA, SimulationStep, SimulationResult, Transition } from "@/types";
 import { generateId } from "@/core/shared";
@@ -270,11 +270,45 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef, 
                         if (selectedNodes.length > 0) onNodesDelete(selectedNodes);
                         if (selectedEdges.length > 0) onEdgesDelete(selectedEdges);
                     }}
-                    className="fixed bottom-4 left-4 md:left-auto md:right-12 z-[99] w-12 h-12 md:w-10 md:h-10 bg-amber-700 text-white rounded-full md:rounded-xl flex items-center justify-center shadow-2xl active:scale-95 transition-transform cursor-pointer hover:bg-red-800"
+                    className="fixed bottom-4 left-4 md:left-auto md:right-14 z-[99] w-12 h-12 md:w-10 md:h-10 bg-red-700 text-white rounded-full md:rounded-xl flex items-center justify-center shadow-2xl active:scale-95 transition-transform cursor-pointer hover:bg-red-900"
                     title="Eliminar elemento seleccionado"
                 >
                     <i className="nf nf-md-delete text-xl"></i>
                 </button>
+            ) : null}
+
+            {nodes.some(n => n.selected) ? (
+                <div>
+                <button
+                    onClick={() => {
+                        // Buscamos los elementos seleccionados en el momento exacto del click
+                        const selectedNodes = nodes.filter(n => n.selected);
+
+                        if (selectedNodes.length > 0) selectedNodes.forEach(node => {
+                            updateWorkspace((prev: any) => toggleAcceptState(prev, node.id));
+                        });
+                    }}
+                    className="fixed bottom-18 left-4 md:bottom-16 md:left-auto md:right-14 z-[99] w-12 h-12 md:w-10 md:h-10 bg-amber-500 text-white rounded-full md:rounded-xl flex items-center justify-center shadow-2xl active:scale-95 transition-transform cursor-pointer hover:bg-amber-700"
+                    title="Convertir a estado de aceptación"
+                >
+                    <i className="nf nf-md-circle_double text-xl"></i>
+                </button>
+
+                <button
+                    onClick={() => {
+                        // Buscamos los elementos seleccionados en el momento exacto del click
+                        const selectedNodes = nodes.filter(n => n.selected);
+
+                        if (selectedNodes.length > 0) selectedNodes.forEach(node => {
+                            updateWorkspace((prev: any) => toggleStartState(prev, node.id));
+                        });
+                    }}
+                    className="fixed bottom-32 left-4 md:bottom-28 md:left-auto md:right-14 z-[99] w-12 h-12 md:w-10 md:h-10 bg-amber-500 text-white rounded-full md:rounded-xl flex items-center justify-center shadow-2xl active:scale-95 transition-transform cursor-pointer hover:bg-amber-700"
+                    title="Convertir a estado de inicio"
+                >
+                    <i className="nf nf-fa-circle_right text-xl"></i>
+                </button>
+                </div>
             ) : null}
 
 
