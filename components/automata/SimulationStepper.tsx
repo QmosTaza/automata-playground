@@ -56,7 +56,7 @@ export default function SimulationStepper({ fa, results, onActiveStateChange, on
         currentStep && fa.acceptStates.includes(currentStep.state);
 
     return (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-5xl flex gap-4 pointer-events-none">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[120] w-[92%] max-w-5xl flex gap-4 pointer-events-none">
 
             {/* BRANCH PANEL */}
             {branches.length > 1 && (

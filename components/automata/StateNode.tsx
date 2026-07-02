@@ -99,21 +99,31 @@ export default function StateNode({ id, data, selected }: any) {
                 </div>
             )}
 
-            <Handle type="target" position={Position.Left} id="left-target"
-                className={`${handleClassName} transition-all duration-150
-                    ${isConnecting && !isSourceOfConnection 
-                        ? "group-hover:!scale-125 group-hover:!bg-amber-300 group-hover:!border-amber-700" 
-                        : "pointer-events-none"
+            <Handle
+                type="target"
+                position={Position.Left}
+                id="left-target"
+                className={`${handleClassName} transition-all duration-150 relative
+                    before:content-[''] before:absolute before:-top-3 before:-left-3 before:-right-3 before:-bottom-3 before:rounded-full before:pointer-events-auto
+                    ${isConnecting && !isSourceOfConnection
+                        ? "group-hover:!scale-125 group-hover:!bg-amber-300 group-hover:!border-amber-700"
+                        : ""
                     }
-                `} />
+                `}
+            />
 
-            <Handle type="source" position={Position.Right} id="right-source"
-                className={`${handleClassName} transition-all duration-150
-                    ${!isConnecting 
-                        ? "group-hover:!scale-125 group-hover:!bg-amber-300 group-hover:!border-amber-700" 
-                        : "pointer-events-none"
+            <Handle
+                type="source"
+                position={Position.Right}
+                id="right-source"
+                className={`${handleClassName} transition-all duration-150 relative
+                    before:content-[''] before:absolute before:-top-3 before:-left-3 before:-right-3 before:-bottom-3 before:rounded-full before:pointer-events-auto
+                    ${!isConnecting
+                        ? "group-hover:!scale-125 group-hover:!bg-amber-300 group-hover:!border-amber-700"
+                        : ""
                     }
-                `} />
+                `}
+            />
 
             <div className={`relative w-16 h-16 rounded-full border-2 text-stone-800 font-semibold flex items-center justify-center select-none cursor-pointer transition-all duration-300
                 ${isEditing

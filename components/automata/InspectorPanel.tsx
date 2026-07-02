@@ -63,7 +63,7 @@ export default function InspectorPanel({ automaton, onAutomatonChange }: Inspect
     }, [automaton.id]);
 
     return (
-        <div className={`absolute top-0 left-0 h-full z-[90] flex items-center pointer-events-none transition-all duration-300
+        <div className={`absolute top-0 left-0 h-full z-[130] flex items-center pointer-events-none transition-all duration-300 nodrag nopan
             ${isOpen ? "w-full md:w-auto" : "w-0"}
         `}>
             {/* MAIN */}

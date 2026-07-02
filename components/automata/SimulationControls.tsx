@@ -63,7 +63,7 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
     };
 
     return (
-        <div className="absolute bottom-0 md:bottom-auto md:top-0 left-1/2 -translate-x-1/2 z-[40] flex flex-col items-center pointer-events-none w-full sm:w-auto">
+        <div className="absolute bottom-0 md:bottom-auto md:top-0 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center pointer-events-none w-full sm:w-auto">
             {/* TOGGLE BUTTON */}
             <button
                 onClick={() => setIsOpen(!isOpen)}

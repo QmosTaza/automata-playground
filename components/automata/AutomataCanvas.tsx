@@ -121,7 +121,7 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef, 
                 console.error("Automaton to Regex calculation failed:", error);
                 setDebouncedRegex("");
             }
-        }, 800); // ms debounce buffer window
+        }, 1500); // ms debounce buffer window
 
         return () => clearTimeout(timerId);
     }, [fa, canRunSimulation, isMounted]);
