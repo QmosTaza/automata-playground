@@ -144,15 +144,22 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
 
                 {/*TYPE-SPECIFIC TOOLS*/}
                 {faKind === "dfa" && (
-                    <div className="flex items-center gap-1.5 bg-white/90 border border-stone-200/80 p-1 sm:px-4 sm:py-1.5 rounded-xl sm:rounded-full shadow-md backdrop-blur-sm animate-fade-in pointer-events-auto max-w-full overflow-x-auto no-scrollbar">
+                    <div className={`flex items-center gap-1.5 bg-white/90 border border-stone-200/80 p-1 sm:px-4 sm:py-1.5 rounded-xl sm:rounded-full shadow-md backdrop-blur-sm animate-fade-in pointer-events-auto max-w-full overflow-x-auto no-scrollbar transition-opacity duration-200
+                        ${!canRunSimulation ? "opacity-60" : ""}`}
+                    >
                         <span className="hidden sm:inline text-[10px] uppercase tracking-wider font-bold text-stone-400 mr-1 select-none whitespace-nowrap shrink-0">
                             DFA Tools:
                         </span>
 
                         <button
                             onClick={handleMakeComplete}
-                            title="Add a sink state and redirect missing transitions to make the DFA complete"
-                            className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+                            disabled={!canRunSimulation}
+                            title={canRunSimulation ? "Add a sink state and redirect missing transitions to make the DFA complete" : "Fix critical errors to use tools"}
+                            className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border whitespace-nowrap shrink-0
+                                ${canRunSimulation
+                                    ? "text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                                    : "text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed"}
+                            `}
                         >
                             <i className="nf nf-md-format_color_fill"></i>
                             <span>Make Complete</span>
@@ -160,8 +167,13 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
 
                         <button
                             onClick={handleMinimize}
-                            title="Optimize the automaton by merging equivalent redundant states"
-                            className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+                            disabled={!canRunSimulation}
+                            title={canRunSimulation ? "Optimize the automaton by merging equivalent redundant states" : "Fix critical errors to use tools"}
+                            className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border whitespace-nowrap shrink-0
+                                ${canRunSimulation
+                                    ? "text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                                    : "text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed"}
+                            `}
                         >
                             <i className="nf nf-fa-minimize"></i>
                             <span>Minimize</span>
@@ -169,26 +181,37 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
 
                         <button
                             onClick={handleComplement}
-                            title="Convert the DFA to its complement"
-                            className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+                            disabled={!canRunSimulation}
+                            title={canRunSimulation ? "Convert the DFA to its complement" : "Fix critical errors to use tools"}
+                            className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border whitespace-nowrap shrink-0
+                                ${canRunSimulation
+                                    ? "text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                                    : "text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed"}
+                            `}
                         >
                             <i className="nf nf-md-invert_colors"></i>
                             <span>Complement</span>
                         </button>
-
                     </div>
                 )}
 
                 {faKind === "nfa" && (
-                    <div className="flex items-center gap-1.5 bg-white/90 border border-stone-200/80 p-1 sm:px-4 sm:py-1.5 rounded-xl sm:rounded-full shadow-md backdrop-blur-sm animate-fade-in pointer-events-auto max-w-full overflow-x-auto no-scrollbar">
-                        <span className="hidden sm:inline  text-[10px] uppercase tracking-wider font-bold text-stone-400 mr-1 select-none whitespace-nowrap shrink-0">
+                    <div className={`flex items-center gap-1.5 bg-white/90 border border-stone-200/80 p-1 sm:px-4 sm:py-1.5 rounded-xl sm:rounded-full shadow-md backdrop-blur-sm animate-fade-in pointer-events-auto max-w-full overflow-x-auto no-scrollbar transition-opacity duration-200
+                        ${!canRunSimulation ? "opacity-60" : ""}`}
+                    >
+                        <span className="hidden sm:inline text-[10px] uppercase tracking-wider font-bold text-stone-400 mr-1 select-none whitespace-nowrap shrink-0">
                             NFA Tools:
                         </span>
 
                         <button
                             onClick={handleConvertNFAtoDFA}
-                            title="Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction"
-                            className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+                            disabled={!canRunSimulation}
+                            title={canRunSimulation ? "Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction" : "Fix critical errors to use tools"}
+                            className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border whitespace-nowrap shrink-0
+                                ${canRunSimulation
+                                    ? "text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                                    : "text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed"}
+                            `}
                         >
                             <i className="nf nf-md-swap_horizontal"></i>
                             <span>Convert to DFA</span>
@@ -197,15 +220,22 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
                 )}
 
                 {faKind === "lambda-nfa" && (
-                    <div className="flex items-center gap-1.5 bg-white/90 border border-stone-200/80 p-1 sm:px-4 sm:py-1.5 rounded-xl sm:rounded-full shadow-md backdrop-blur-sm animate-fade-in pointer-events-auto max-w-full overflow-x-auto no-scrollbar">
-                        <span className="hidden sm:inline  text-[10px] uppercase tracking-wider font-bold text-stone-400 mr-1 select-none whitespace-nowrap shrink-0">
+                    <div className={`flex items-center gap-1.5 bg-white/90 border border-stone-200/80 p-1 sm:px-4 sm:py-1.5 rounded-xl sm:rounded-full shadow-md backdrop-blur-sm animate-fade-in pointer-events-auto max-w-full overflow-x-auto no-scrollbar transition-opacity duration-200
+                        ${!canRunSimulation ? "opacity-60" : ""}`}
+                    >
+                        <span className="hidden sm:inline text-[10px] uppercase tracking-wider font-bold text-stone-400 mr-1 select-none whitespace-nowrap shrink-0">
                             λ-NFA Tools:
                         </span>
 
                         <button
                             onClick={handleConvertLambdaNFAtoDFA}
-                            title="Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction"
-                            className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+                            disabled={!canRunSimulation}
+                            title={canRunSimulation ? "Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction" : "Fix critical errors to use tools"}
+                            className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border whitespace-nowrap shrink-0
+                                ${canRunSimulation
+                                    ? "text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                                    : "text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed"}
+                            `}
                         >
                             <i className="nf nf-md-swap_horizontal"></i>
                             <span>Convert to DFA</span>
@@ -213,8 +243,13 @@ export default function SimulationControls({ fa, onAutomataChange, faKind, onKin
 
                         <button
                             onClick={handleConvertLambdaNFAtoNFA}
-                            title="Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction"
-                            className="px-2.5 py-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+                            disabled={!canRunSimulation}
+                            title={canRunSimulation ? "Convert this Non-Deterministic machine into a Deterministic equivalent using subset construction" : "Fix critical errors to use tools"}
+                            className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 font-semibold text-xs border whitespace-nowrap shrink-0
+                                ${canRunSimulation
+                                    ? "text-amber-900 hover:text-amber-950 hover:bg-amber-100/70 border-amber-200 bg-amber-50/50 cursor-pointer active:scale-95"
+                                    : "text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed"}
+                            `}
                         >
                             <i className="nf nf-md-swap_horizontal"></i>
                             <span>Convert to NFA</span>

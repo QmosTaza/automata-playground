@@ -259,6 +259,25 @@ function AutomataCanvasContent({ activeData, onSave, onLiveRename, saveHookRef, 
                 onAutomatonChange={handleAutomataChange}
             />
 
+            {/* BUTTON FOR DELETE SELECTED ITEMS (MOBILE mainly) */}
+            {nodes.some(n => n.selected) || edges.some(e => e.selected) ? (
+                <button
+                    onClick={() => {
+                        // Buscamos los elementos seleccionados en el momento exacto del click
+                        const selectedNodes = nodes.filter(n => n.selected);
+                        const selectedEdges = edges.filter(e => e.selected);
+
+                        if (selectedNodes.length > 0) onNodesDelete(selectedNodes);
+                        if (selectedEdges.length > 0) onEdgesDelete(selectedEdges);
+                    }}
+                    className="fixed bottom-4 left-4 md:left-auto md:right-12 z-[99] w-12 h-12 md:w-10 md:h-10 bg-amber-700 text-white rounded-full md:rounded-xl flex items-center justify-center shadow-2xl active:scale-95 transition-transform cursor-pointer hover:bg-red-800"
+                    title="Eliminar elemento seleccionado"
+                >
+                    <i className="nf nf-md-delete text-xl"></i>
+                </button>
+            ) : null}
+
+
             <ReactFlow
                 nodes={nodes}
                 edges={edges}

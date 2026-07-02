@@ -318,7 +318,6 @@ export default function Home() {
         onClear={handleClearWorkspace}
       />
 
-
       {/* Global Navigation */}
       <AutomataTabs
         project={project}
@@ -339,6 +338,7 @@ export default function Home() {
           scheduleSave={scheduleSave}
         />
       </div>
+
       <HelpGuide
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
